@@ -11,7 +11,6 @@
     <style type="text/css">
         body {
             margin: 10px;
-            white-space: nowrap;
         }
 
         h1 {
@@ -20,8 +19,6 @@
 
         #container {
             align-items: center;
-            display: flex;
-            justify-content: space-between;
         }
     </style>
 
@@ -35,16 +32,17 @@
 </head>
 
 <body>
-<h1>Background Color Changer</h1>
+<h1>PR Tracker</h1>
 <div id="container">
-    <span>Choose a color</span>
-    <select id="dropdown">
-        <option selected disabled hidden value=''></option>
-        <option value="white">White</option>
-        <option value="pink">Pink</option>
-        <option value="green">Green</option>
-        <option value="yellow">Yellow</option>
-    </select>
+    <div>
+        <button>My Open PRs</button>
+    </div>
+    <div>
+        <button>PRs to Review (WIP)</button>
+    </div>
+    <div>
+        <button>My Mentions (WIP)</button>
+    </div>
 </div>
 </body>
 </html>
