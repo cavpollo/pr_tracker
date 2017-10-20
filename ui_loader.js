@@ -38,6 +38,10 @@ function sortRepositoryData(repositoriesData) {
             pullRequest.comment_reviewers.sort(function (a, b) {
                 return a.username.localeCompare(b.username);
             });
+
+            pullRequest.labels.sort(function (a, b) {
+                return a.name.localeCompare(b.name);
+            });
         }
     }
 }
@@ -76,8 +80,8 @@ function renderRepositoryData(repositoriesData) {
             pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: ' + (approved ? (canMerged ? '#00ae11' : '#ddde00') : '#b40900') + '; border-radius: 4px;" title="' + statusText + '" alt="' + statusText + '"></div>\n';
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td>\n';
-            pullRequestHTML += '<h3><a href="' + pullRequest.url + '">' + pullRequest.title + '</a></h3>\n';
-            pullRequestHTML += '<p style="margin-left: 8px;"><b>' + pullRequest.head_name + '</b> ==merge into==&gt; <b>' + pullRequest.base_name + '</b></p>\n';
+            pullRequestHTML += '<h3><a href="' + pullRequest.url + '">' + pullRequest.title + '</a>' + (pullRequest.status !== 'LOADED' ? ' - Loading Data, please reload.' : '') + '</h3>\n';
+            pullRequestHTML += '<p style="margin-left: 8px;"><b>' + pullRequest.head_name + '</b> --merge into--&gt; <b>' + pullRequest.base_name + '</b></p>\n';
             pullRequestHTML += '<p style="margin-left: 8px;">Created ' + formatDate(createdDate) + ' - ' + pullRequest.changed_files + ' files ' + '</p>\n';
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td>\n';

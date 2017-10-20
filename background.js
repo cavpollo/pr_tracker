@@ -430,8 +430,8 @@ function getPullRequestLabels(authToken, repositoryFullName, pullRequestData) {
 
             if (xhr.responseText) {
                 var labelsData = JSON.parse(xhr.responseText);
-                console.log(repositoryFullName + '/' + pullRequestNumber + '/labels:');
-                console.log(labelsData);
+                // console.log(repositoryFullName + '/' + pullRequestNumber + '/labels:');
+                // console.log(labelsData);
 
                 var labels = [];
                 for (var j = 0, label; label = labelsData.labels[j]; j++) {
