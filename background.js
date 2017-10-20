@@ -6,6 +6,7 @@ var repositoriesData = [];
 var LOADING = 'LOADING';
 var LOADED = 'LOADED';
 var ERROR = 'ERROR';
+var RENDERED = 'RENDERED';
 
 function goToIndexPage() {
     var indexUrl = chrome.runtime.getURL("index.html");
@@ -37,6 +38,10 @@ function updateIcon() {
         chrome.browserAction.setBadgeBackgroundColor({color: [190, 190, 190, 230]});
         chrome.browserAction.setBadgeText({text: 'X'});
     }
+}
+
+function getHTML() {
+    return repositoriesData.toString();
 }
 
 function loadData() {
@@ -93,7 +98,7 @@ function getRepositories(authToken, organization) {
                     var repoData = {
                         name: repository.name,
                         full_name: repository.full_name,
-                        git_url: repository.git_url,
+                        url: repository.html_url,
                         updated_at: repository.updated_at,
                         pull_requests: [],
                         status: LOADING
@@ -154,10 +159,10 @@ function getRepositoryPullRequests(authToken, repoData) {
 
             if (xhr.responseText) {
                 var pullRequestArray = JSON.parse(xhr.responseText);
-                if (pullRequestArray.length > 0) {
-                    console.log(repositoryFullName + ':');
-                    console.log(pullRequestArray);
-                }
+                // if (pullRequestArray.length > 0) {
+                //     console.log(repositoryFullName + ':');
+                //     console.log(pullRequestArray);
+                // }
 
                 for (var i = 0, pullRequest; pullRequest = pullRequestArray[i]; i++) {
                     var assigneesArray = [];
@@ -195,6 +200,7 @@ function getRepositoryPullRequests(authToken, repoData) {
                         pending_reviewers: pendingReviewers,
                         disapproved_reviewers: [],
                         approved_reviewers: [],
+                        comment_reviewers: [],
                         unanswered_comments: -1,
                         comments: -1,
                         commits: -1,
@@ -271,8 +277,8 @@ function getPullRequest(authToken, repositoryFullName, pullRequestData) {
 
             if (xhr.responseText) {
                 var pullRequestInfo = JSON.parse(xhr.responseText);
-                console.log(repositoryFullName  + '/' + pullRequestNumber + ':');
-                console.log(pullRequestInfo);
+                // console.log(repositoryFullName + '/' + pullRequestNumber + ':');
+                // console.log(pullRequestInfo);
 
                 pullRequestData.comments = pullRequestInfo.comments;
                 pullRequestData.commits = pullRequestInfo.commits;
@@ -280,7 +286,10 @@ function getPullRequest(authToken, repositoryFullName, pullRequestData) {
                 pullRequestData.deletions = pullRequestInfo.deletions;
                 pullRequestData.changed_files = pullRequestInfo.changed_files;
                 pullRequestData.mergeable = pullRequestInfo.mergeable;
-                pullRequestData.status = LOADED;
+
+                updateIcon();
+
+                getPullRequestReviews(authToken, repositoryFullName, pullRequestData)
 
                 return;
             }
@@ -291,6 +300,100 @@ function getPullRequest(authToken, repositoryFullName, pullRequestData) {
             handleError();
         };
         xhr.open("GET", "https://api.github.com/repos/" + repositoryFullName + "/pulls/" + pullRequestNumber, true);
+        xhr.setRequestHeader("Authorization", "token " + authToken);
+        xhr.send(null);
+    } catch (e) {
+        console.error("Get Repositories XHR exception");
+        handleError();
+    }
+}
+
+function getPullRequestReviews(authToken, repositoryFullName, pullRequestData) {
+    var xhr = new XMLHttpRequest();
+    var pullRequestNumber = pullRequestData.number;
+
+    var abortTimerId = window.setTimeout(function () {
+        xhr.abort();
+    }, requestTimeoutSeconds);
+
+    function handleError() {
+        window.clearTimeout(abortTimerId);
+        localStorage.requestFailureCount++;
+
+        pullRequestData.status = ERROR;
+
+        delete localStorage.notificationCount;
+        updateIcon();
+    }
+
+    try {
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) {
+                return;
+            }
+
+            if (this.status < 200 || this.status >= 300) {
+                console.error('Get Repositories Failed: ' + this.status);
+                pullRequestData.status = ERROR;
+                return;
+            }
+
+            if (xhr.responseText) {
+                var reviewersData = JSON.parse(xhr.responseText);
+                // console.log(repositoryFullName + '/' + pullRequestNumber + '/reviewers:');
+                // console.log(reviewersData);
+
+                var latestUniqueReviewers = {};
+                for (var j = 0, reviewer; reviewer = reviewersData[j]; j++) {
+                    var userId = reviewer.user.id;
+
+                    latestUniqueReviewers[userId] = {
+                        id: reviewer.id,
+                        status: reviewer.state,
+                        userId: userId,
+                        username: reviewer.user.login,
+                        avatar_url: reviewer.user.avatar_url,
+                        url: reviewer.user.html_url
+                    };
+                }
+
+                var approvedReviewers = [];
+                var disapprovedReviewers = [];
+                var commentReviewers = [];
+                Object.keys(latestUniqueReviewers).forEach(function (key) {
+                    var reviewerData = latestUniqueReviewers[key];
+
+                    if (reviewerData.status === 'APPROVED') {
+                        approvedReviewers.push(reviewerData);
+                    } else {
+                        if (reviewerData.status === 'CHANGES_REQUESTED') {
+                            disapprovedReviewers.push(reviewerData);
+                        } else {
+                            if (reviewerData.status === 'COMMENTED') {
+                                commentReviewers.push(reviewerData);
+                            } else {
+                                console.error('Unknown Reviewer status: ' + reviewerData.status)
+                            }
+                        }
+                    }
+                });
+
+                pullRequestData.approved_reviewers = approvedReviewers;
+                pullRequestData.disapproved_reviewers = disapprovedReviewers;
+                pullRequestData.comment_reviewers = commentReviewers;
+                pullRequestData.status = LOADED;
+
+                updateIcon();
+
+                return;
+            }
+
+            handleError();
+        };
+        xhr.onerror = function (error) {
+            handleError();
+        };
+        xhr.open("GET", "https://api.github.com/repos/" + repositoryFullName + "/pulls/" + pullRequestNumber + "/reviews", true);
         xhr.setRequestHeader("Authorization", "token " + authToken);
         xhr.send(null);
     } catch (e) {

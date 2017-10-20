@@ -21,7 +21,8 @@
     "activeTab",
     "storage",
     "webNavigation",
-    "*://*.github.com/"
+    "http://*.github.com/",
+    "https://*.github.com/"
   ],
 
   "options_page": "options.html"
