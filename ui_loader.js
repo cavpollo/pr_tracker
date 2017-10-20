@@ -47,7 +47,7 @@ function sortRepositoryData(repositoriesData) {
 function renderRepositoryData(repositoriesData) {
     sortRepositoryData(repositoriesData);
 
-    console.log(repositoriesData);
+    // console.log(repositoriesData);
 
     var repositoriesDiv = document.getElementById('repositories');
 
@@ -58,44 +58,44 @@ function renderRepositoryData(repositoriesData) {
             continue;
         }
 
-        var repositoryHtml = '<div style="background-color: #93bcff; margin-bottom: 8px; padding: 2px 8px 2px 8px;">\n';
+        var repositoryHtml = '<div style="background-color: #93bcff; margin-bottom: 8px; padding: 2px 8px 2px 8px; border-radius: 8px;">\n';
         repositoryHtml += '<h2><a href="' + repository.url + '">' + repository.full_name + '</a></h2>\n';
-        repositoryHtml += '<div style="background-color: #000000;">\n';
+        repositoryHtml += '<div>\n';
 
         for (var j = 0, pullRequest; pullRequest = repository.pull_requests[j]; j++) {
 
             var approved = pullRequest.disapproved_reviewers.length === 0 && pullRequest.approved_reviewers.length > 0;
+            var statusText = approved ? (canMerged ? 'ALL GOOD' : 'CONFLICTS MUST BE FIXED') : 'CHANGES REQUESTED';
+            var canMerged = pullRequest.mergeable !== null && pullRequest.mergeable === true;
             var createdDate = new Date(pullRequest.created_at);
 
-            console.log(pullRequest);
-
-            var pullRequestHTML = '<div  style="margin: 0 0 8px 0; padding: 2px 8px 8px 8px; background-color: #ffffff;">\n';
+            var pullRequestHTML = '<div style="margin: 0 0 8px 0; padding: 2px 8px 8px 8px; background-color: #ffffff; border-radius: 4px;">\n';
             pullRequestHTML += '<table>\n';
             pullRequestHTML += '<tr>\n';
             pullRequestHTML += '<td>\n';
-            pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: '+(approved ? '#00ae11' : '#b40900')+'"></div>\n';
+            pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: ' + (approved ? (canMerged ? '#00ae11' : '#ddde00') : '#b40900') + '; border-radius: 4px;" title="' + statusText + '" alt="' + statusText + '"></div>\n';
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td>\n';
             pullRequestHTML += '<h3><a href="' + pullRequest.url + '">' + pullRequest.title + '</a></h3>\n';
             pullRequestHTML += '<p style="margin-left: 8px;"><b>' + pullRequest.head_name + '</b> ==merge into==&gt; <b>' + pullRequest.base_name + '</b></p>\n';
-            pullRequestHTML += '<p style="margin-left: 8px;">Created ' + formatDate(createdDate) + ' - ' + pullRequest.changed_files + ' files ' + (pullRequest.mergeable !== null ? (pullRequest.mergeable === false ? '- <b>Cannot</b> be merged' : '- Can be merged') : '') + '</p>\n';
+            pullRequestHTML += '<p style="margin-left: 8px;">Created ' + formatDate(createdDate) + ' - ' + pullRequest.changed_files + ' files ' + '</p>\n';
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td>\n';
             pullRequestHTML += '<div style="width: 32px;"></div>\n';
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td style="vertical-align: bottom;">\n';
 
-            if(pullRequest.assignees.length === 0){
+            if (pullRequest.assignees.length === 0) {
 
-                pullRequestHTML += '<div">';
-                pullRequestHTML += '<div style="width: 36px; height: 36px; line-height: 36px; display: inline-block; background-color: #444444; color: #ffffff; vertical-align:middle; text-align:center;">?</div>\n';
+                pullRequestHTML += '<div>\n';
+                pullRequestHTML += '<div style="width: 36px; height: 36px; line-height: 36px; display: inline-block; background-color: #444444; color: #ffffff; vertical-align:middle; text-align:center; border-radius: 4px;">?</div>\n';
                 pullRequestHTML += '</div>\n';
             }
 
             for (var k = 0, assignee; assignee = pullRequest.assignees[k]; k++) {
-                pullRequestHTML += '<div>';
+                pullRequestHTML += '<div>\n';
                 pullRequestHTML += '<a href="' + assignee.url + '">\n';
-                pullRequestHTML += '<img src="' + assignee.avatar_url + '" style="height: 36px; width: 36px;" alt="' + assignee.username + '" />\n';
+                pullRequestHTML += '<img src="' + assignee.avatar_url + '" style="height: 36px; width: 36px;" title="' + assignee.username + '" alt="' + assignee.username + '" />\n';
                 pullRequestHTML += '</a>\n';
                 pullRequestHTML += '</div>\n';
             }
@@ -108,38 +108,52 @@ function renderRepositoryData(repositoriesData) {
 
 
             for (var l = 0, reviewer; reviewer = pullRequest.disapproved_reviewers[l]; l++) {
-                pullRequestHTML += '<div>';
-                pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #b40900"></div>\n';
+                pullRequestHTML += '<div>\n';
+                pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #b40900; border-radius: 4px;" title="REJECTED" alt="REJECTED"></div>\n';
                 pullRequestHTML += '<a href="' + reviewer.url + '">\n';
-                pullRequestHTML += '<img src="' + reviewer.avatar_url + '" style="height: 36px; width: 36px;" alt="' + reviewer.username + '" />\n';
+                pullRequestHTML += '<img src="' + reviewer.avatar_url + '" style="height: 36px; width: 36px;" title="' + reviewer.username + '" alt="' + reviewer.username + '" />\n';
                 pullRequestHTML += '</a>\n';
                 pullRequestHTML += '</div>\n';
             }
 
             for (var m = 0, reviewer; reviewer = pullRequest.comment_reviewers[m]; m++) {
-                pullRequestHTML += '<div>';
-                pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #a8a8a8"></div>\n';
+                pullRequestHTML += '<div>\n';
+                pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #a8a8a8; border-radius: 4px;" title="COMMENT" alt="COMMENT"></div>\n';
                 pullRequestHTML += '<a href="' + reviewer.url + '">\n';
-                pullRequestHTML += '<img src="' + reviewer.avatar_url + '" style="height: 36px; width: 36px;" alt="' + reviewer.username + '" />\n';
+                pullRequestHTML += '<img src="' + reviewer.avatar_url + '" style="height: 36px; width: 36px;" title="' + reviewer.username + '" alt="' + reviewer.username + '" />\n';
                 pullRequestHTML += '</a>\n';
                 pullRequestHTML += '</div>\n';
             }
 
             for (var n = 0, reviewer; reviewer = pullRequest.pending_reviewers[n]; n++) {
-                pullRequestHTML += '<div>';
-                pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #ddde00"></div>\n';
+                pullRequestHTML += '<div>\n';
+                pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #ddde00; border-radius: 4px;" title="INVITED" alt="INVITED"></div>\n';
                 pullRequestHTML += '<a href="' + reviewer.url + '">\n';
-                pullRequestHTML += '<img src="' + reviewer.avatar_url + '" style="height: 36px; width: 36px;" alt="' + reviewer.username + '" />\n';
+                pullRequestHTML += '<img src="' + reviewer.avatar_url + '" style="height: 36px; width: 36px;" title="' + reviewer.username + '" alt="' + reviewer.username + '" />\n';
                 pullRequestHTML += '</a>\n';
                 pullRequestHTML += '</div>\n';
             }
 
             for (var o = 0, reviewer; reviewer = pullRequest.approved_reviewers[o]; o++) {
-                pullRequestHTML += '<div>';
-                pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #00ae11"></div>\n';
+                pullRequestHTML += '<div>\n';
+                pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #00ae11; border-radius: 4px;" title="APPROVED" alt="APPROVED"></div>\n';
                 pullRequestHTML += '<a href="' + reviewer.url + '">\n';
-                pullRequestHTML += '<img src="' + reviewer.avatar_url + '" style="height: 36px; width: 36px;" alt="' + reviewer.username + '" />\n';
+                pullRequestHTML += '<img src="' + reviewer.avatar_url + '" style="height: 36px; width: 36px;" title="' + reviewer.username + '" alt="' + reviewer.username + '" />\n';
                 pullRequestHTML += '</a>\n';
+                pullRequestHTML += '</div>\n';
+            }
+
+            pullRequestHTML += '</td>\n';
+            pullRequestHTML += '<td>\n';
+            pullRequestHTML += '<div style="width: 16px;"></div>\n';
+            pullRequestHTML += '</td>\n';
+            pullRequestHTML += '<td>\n';
+
+            for (var p = 0, label; label = pullRequest.labels[p]; p++) {
+                pullRequestHTML += '<div>\n';
+                pullRequestHTML += '<div style="width: 72px; height: 36px; line-height: 36px; display: inline-block; background-color: #' + label.color + '; vertical-align:middle; text-align:center; border-radius: 4px;">\n';
+                pullRequestHTML += '<b>' + label.name + '</b>\n';
+                pullRequestHTML += '</div>\n';
                 pullRequestHTML += '</div>\n';
             }
 

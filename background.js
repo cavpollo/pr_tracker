@@ -196,7 +196,7 @@ function getRepositoryPullRequests(authToken, repoData) {
                         assignees: assigneesArray,
                         head_name: pullRequest.head.ref,
                         base_name: pullRequest.base.ref,
-                        tags: [],
+                        labels: [],
                         pending_reviewers: pendingReviewers,
                         disapproved_reviewers: [],
                         approved_reviewers: [],
@@ -215,16 +215,11 @@ function getRepositoryPullRequests(authToken, repoData) {
 
                     repoData.pull_requests.push(pullRequestData);
 
-                    //pullRequest.review_comments_url
-                    //pullRequest.comments_url
-
                     updateIcon();
 
                     getPullRequest(authToken, repositoryFullName, pullRequestData);
 
-                    // Add tags
-                    // Count how many comments are left unanswered by the assignee
-                    // Add the approved & disapproved reviewers data (name, picture, and status)
+                    // TODO: Count how many comments are left unanswered by the assignee
                 }
                 repoData.status = LOADED;
 
@@ -381,6 +376,75 @@ function getPullRequestReviews(authToken, repositoryFullName, pullRequestData) {
                 pullRequestData.approved_reviewers = approvedReviewers;
                 pullRequestData.disapproved_reviewers = disapprovedReviewers;
                 pullRequestData.comment_reviewers = commentReviewers;
+
+                updateIcon();
+
+                getPullRequestLabels(authToken, repositoryFullName, pullRequestData)
+
+                return;
+            }
+
+            handleError();
+        };
+        xhr.onerror = function (error) {
+            handleError();
+        };
+        xhr.open("GET", "https://api.github.com/repos/" + repositoryFullName + "/pulls/" + pullRequestNumber + "/reviews", true);
+        xhr.setRequestHeader("Authorization", "token " + authToken);
+        xhr.send(null);
+    } catch (e) {
+        console.error("Get Repositories XHR exception");
+        handleError();
+    }
+}
+
+function getPullRequestLabels(authToken, repositoryFullName, pullRequestData) {
+    var xhr = new XMLHttpRequest();
+    var pullRequestNumber = pullRequestData.number;
+
+    var abortTimerId = window.setTimeout(function () {
+        xhr.abort();
+    }, requestTimeoutSeconds);
+
+    function handleError() {
+        window.clearTimeout(abortTimerId);
+        localStorage.requestFailureCount++;
+
+        pullRequestData.status = ERROR;
+
+        delete localStorage.notificationCount;
+        updateIcon();
+    }
+
+    try {
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) {
+                return;
+            }
+
+            if (this.status < 200 || this.status >= 300) {
+                console.error('Get Repositories Failed: ' + this.status);
+                pullRequestData.status = ERROR;
+                return;
+            }
+
+            if (xhr.responseText) {
+                var labelsData = JSON.parse(xhr.responseText);
+                console.log(repositoryFullName + '/' + pullRequestNumber + '/labels:');
+                console.log(labelsData);
+
+                var labels = [];
+                for (var j = 0, label; label = labelsData.labels[j]; j++) {
+                    var labelData = {
+                        id: label.id,
+                        name: label.name,
+                        color: label.color
+                    };
+
+                    labels.push(labelData);
+                }
+
+                pullRequestData.labels = labels;
                 pullRequestData.status = LOADED;
 
                 updateIcon();
@@ -393,7 +457,7 @@ function getPullRequestReviews(authToken, repositoryFullName, pullRequestData) {
         xhr.onerror = function (error) {
             handleError();
         };
-        xhr.open("GET", "https://api.github.com/repos/" + repositoryFullName + "/pulls/" + pullRequestNumber + "/reviews", true);
+        xhr.open("GET", "https://api.github.com/repos/" + repositoryFullName + "/issues/" + pullRequestNumber, true);
         xhr.setRequestHeader("Authorization", "token " + authToken);
         xhr.send(null);
     } catch (e) {
