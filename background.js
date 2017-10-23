@@ -40,10 +40,6 @@ function updateIcon() {
     }
 }
 
-function getHTML() {
-    return repositoriesData.toString();
-}
-
 function loadData() {
     console.log('LOAD DATA CALL');
     chrome.storage.sync.get({

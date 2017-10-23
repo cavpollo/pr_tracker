@@ -9,6 +9,8 @@ function save_options() {
     }, function() {
         var status = document.getElementById('status');
         status.textContent = 'Options saved.';
+        var backgroundPage = chrome.extension.getBackgroundPage();
+        backgroundPage.loadData();
         setTimeout(function() {
             status.textContent = '';
         }, 1500);
