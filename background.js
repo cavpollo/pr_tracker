@@ -1,4 +1,4 @@
-var pollIntervalMinutesMin = 1;
+var pollIntervalMinutesMin = 5;
 var pollIntervalMinutesMax = 60;
 var requestTimeoutSeconds = 1000 * 2;
 var repositoriesData = [];
@@ -44,13 +44,15 @@ function loadData() {
     console.log('LOAD DATA CALL');
     chrome.storage.sync.get({
         authToken: '',
-        organization: ''
+        organization: '',
+        reposIgnored: ''
     }, function (items) {
         var authToken = items.authToken;
         var organization = items.organization;
+        var reposIgnored = items.reposIgnored.split(',').map(function(s) { return s.trim() });
 
         if (authToken && organization) {
-            getRepositories(authToken, organization);
+            getRepositories(authToken, organization, reposIgnored);
         } else {
             console.log("No oauth token or organization");
             delete localStorage.notificationCount;
@@ -59,7 +61,7 @@ function loadData() {
     });
 }
 
-function getRepositories(authToken, organization) {
+function getRepositories(authToken, organization, reposIgnored) {
     var xhr = new XMLHttpRequest();
 
     var abortTimerId = window.setTimeout(function () {
@@ -91,6 +93,11 @@ function getRepositories(authToken, organization) {
 
                 repositoriesData = [];
                 for (var i = 0, repository; repository = repositoryArray[i]; i++) {
+                    if(reposIgnored.indexOf(repository.name) > -1){
+                        console.log('Repo ' + repository.name + ' was ignored.');
+                        continue;
+                    }
+
                     var repoData = {
                         name: repository.name,
                         full_name: repository.full_name,
@@ -499,5 +506,5 @@ function createAlarm() {
 chrome.browserAction.onClicked.addListener(goToIndexPage);
 chrome.alarms.onAlarm.addListener(onAlarm);
 
-updateIcon();
+loadData();
 chrome.alarms.create('watchdog', {periodInMinutes: 5});

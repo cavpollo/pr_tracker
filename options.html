@@ -5,15 +5,23 @@
 </head>
 <body>
 
-<label>
-    Github Oauth Token:
-    <input type="text" id="authToken">
-</label>
+<div>
+    <label>
+        Github Oauth Token:
+        <input type="text" id="authToken">
+    </label>
 
-<label>
-    Organization:
-    <input type="text" id="organization">
-</label>
+    <label>
+        Organization:
+        <input type="text" id="organization">
+    </label>
+</div>
+<div>
+    <label>
+        Repositories Ignored (full names comma separated):
+        <textarea id="reposIgnored"></textarea>
+    </label>
+</div>
 
 <div id="status"></div>
 <button id="save">Save</button>

@@ -2,10 +2,12 @@
 function save_options() {
     var authToken = document.getElementById('authToken').value;
     var organization = document.getElementById('organization').value;
+    var reposIgnored = document.getElementById('reposIgnored').value;
 
     chrome.storage.sync.set({
         authToken: authToken,
-        organization: organization
+        organization: organization,
+        reposIgnored: reposIgnored
     }, function() {
         var status = document.getElementById('status');
         status.textContent = 'Options saved.';
@@ -21,10 +23,12 @@ function save_options() {
 function restore_options() {
     chrome.storage.sync.get({
         authToken: '',
-        organization: ''
+        organization: '',
+        reposIgnored: ''
     }, function(items) {
         document.getElementById('authToken').value = items.authToken;
         document.getElementById('organization').value = items.organization;
+        document.getElementById('reposIgnored').value = items.reposIgnored;
     });
 }
 
