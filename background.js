@@ -1,12 +1,13 @@
-var pollIntervalMinutesMin = 5;
-var pollIntervalMinutesMax = 60;
 var requestTimeoutSeconds = 1000 * 2;
+var refreshPeriodMinutes = 5;
+var watchdogPeriodMinutes = 10;
 var maxRequestsPerSecond = 25;
 var repositoriesData = [];
-var apiTimeoutSeconds = 500 * 1;
-var apiTimeoutRandomSeconds = 2000;
+var apiTimeoutSeconds = 1;
+var apiTimeoutRandomSeconds = 10;
 var startApiTime = 0;
 var apiCount = 0;
+var currentRandomId = -1;
 
 var LOADING = 'LOADING';
 var LOADED = 'LOADED';
@@ -45,67 +46,34 @@ function updateIcon() {
     }
 }
 
-function loadData() {
-    console.log('LOAD DATA CALL');
-    chrome.storage.sync.get({
-        authToken: '',
-        organization: '',
-        reposIgnored: ''
-    }, function (items) {
-        var authToken = items.authToken;
-        var organization = items.organization;
-        var reposIgnored = items.reposIgnored.split(',').map(function (s) {
-            return s.trim()
-        });
-
-        if (authToken && organization) {
-            repositoriesData = [];
-            startApiTime = new Date();
-            apiCount = 0;
-            asyncGetWithTimeout('Repositories',
-                repositoriesData,
-                authToken,
-                'https://api.github.com/orgs/' + organization + '/repos',
-                1,
-                getRepositories,
-                {reposIgnored: reposIgnored})
-            // getRepositories(authToken, organization, reposIgnored, repositoriesData);
-        } else {
-            console.log('No oauth token or organization');
-            delete localStorage.notificationCount;
-            updateIcon();
-        }
-    });
-}
-
-function asyncGetWithTimeout(methodName, cumulativeRepositoryData, authToken, url, page, callback, params) {
+function asyncGetWithTimeout(methodName, cumulativeRepositoryData, randomId, authToken, url, page, callback, params) {
     apiCount = apiCount + 1;
-    console.log('START ' + methodName);
+    // console.log('START ' + methodName);
 
     var now = new Date();
 
-    var timeInSeconds = (now.getTime() - startApiTime.getTime())/1000;
-    var requestsPerSecond = apiCount / timeInSeconds;
-    console.log(methodName + ' Requests Per Second: ' + apiCount + 'req / ' + timeInSeconds + 's = ' + requestsPerSecond + 'req/s');
+    var timeInSeconds = (now.getTime() - startApiTime.getTime()) / 1000;
+    var requestsPerSecond = timeInSeconds < 0.5 ? 0 : apiCount / timeInSeconds;
+    // console.log(methodName + ' Requests Per Second: ' + apiCount + 'req / ' + timeInSeconds + 's = ' + requestsPerSecond + 'req/s');
 
     if (requestsPerSecond > maxRequestsPerSecond) {
         apiCount = apiCount - 1;
-        doTimeout(methodName, cumulativeRepositoryData, authToken, url, page, callback, params);
+        doTimeout(methodName, cumulativeRepositoryData, randomId, authToken, url, page, callback, params);
     } else {
-        asyncGet(methodName, cumulativeRepositoryData, authToken, url, page, callback, params);
+        asyncGet(methodName, cumulativeRepositoryData, randomId, authToken, url, page, callback, params);
     }
 }
 
-function doTimeout(methodName, cumulativeRepositoryData, authToken, url, page, callback, params) {
-    var timeout = apiTimeoutSeconds + (apiTimeoutRandomSeconds * Math.random());
-    console.log(methodName + ': Retry in ' + timeout);
+function doTimeout(methodName, cumulativeRepositoryData, randomId, authToken, url, page, callback, params) {
+    var timeout = (apiTimeoutSeconds * 1000) + (apiTimeoutRandomSeconds * 1000 * Math.random());
+    // console.log(methodName + ': Retry in ' + timeout);
     setTimeout(function () {
         console.log(methodName + ': Retrying');
-        asyncGetWithTimeout(methodName, cumulativeRepositoryData, authToken, url, page, callback, params);
+        asyncGetWithTimeout(methodName, cumulativeRepositoryData, randomId, authToken, url, page, callback, params);
     }, timeout);
 }
 
-function asyncGet(methodName, cumulativeRepositoryData, authToken, url, page, callback, params) {
+function asyncGet(methodName, cumulativeRepositoryData, randomId, authToken, url, page, callback, params) {
     var xhr = new XMLHttpRequest();
 
     if (url === undefined) {
@@ -125,7 +93,6 @@ function asyncGet(methodName, cumulativeRepositoryData, authToken, url, page, ca
 
     function handleError() {
         window.clearTimeout(abortTimerId);
-        localStorage.requestFailureCount++;
 
         delete localStorage.notificationCount;
         updateIcon();
@@ -141,7 +108,7 @@ function asyncGet(methodName, cumulativeRepositoryData, authToken, url, page, ca
                         var nextPagePresent = link.includes('rel="next"');
 
                         if (nextPagePresent) {
-                            asyncGetWithTimeout(methodName, cumulativeRepositoryData, authToken, url, page + 1, callback, params);
+                            asyncGetWithTimeout(methodName, cumulativeRepositoryData, randomId, authToken, url, page + 1, callback, params);
                         }
                     }
                 }
@@ -150,23 +117,29 @@ function asyncGet(methodName, cumulativeRepositoryData, authToken, url, page, ca
             }
 
             if (this.status === 0) {
-                console.error(methodName + ' API Call Limit Exceeded');
+                console.error(methodName + ' API Call Limit Exceeded (or no connection) - will retry');
+                asyncGetWithTimeout(methodName, cumulativeRepositoryData, randomId, authToken, url, page, callback, params);
                 return;
             }
 
-            if (this.status < 200 || this.status >= 300) {
+            if (this.status !== 304 && (this.status < 200 || this.status >= 300)) {
                 console.error(methodName + ' Failed: ' + this.status + ' - ' + url);
+                return;
+            }
+
+            if(randomId !== currentRandomId){
+                console.error(methodName + ' Request is too old');
                 return;
             }
 
             if (xhr.responseText) {
                 var response = JSON.parse(xhr.responseText);
 
-                console.log(methodName + ': ');
+                // console.log(methodName + ': ');
                 // console.log(response);
 
                 if (callback) {
-                    callback(cumulativeRepositoryData, authToken, params, response);
+                    callback(cumulativeRepositoryData, randomId, authToken, params, response);
                 }
 
                 return;
@@ -186,7 +159,48 @@ function asyncGet(methodName, cumulativeRepositoryData, authToken, url, page, ca
     }
 }
 
-function getRepositories(cumulativeRepositoryData, authToken, params, response) {
+function loadData() {
+    console.log('LOAD DATA CALL');
+    chrome.storage.sync.get({
+        authToken: '',
+        organization: '',
+        reposIgnored: ''
+    }, function (items) {
+        var authToken = items.authToken;
+        var organization = items.organization;
+        var reposIgnored = items.reposIgnored.split(',').map(function (s) {
+            return s.trim()
+        });
+
+        if (authToken && organization) {
+            var randomId = Math.random();
+            currentRandomId = randomId + 0;
+
+            repositoriesData = [];
+            startApiTime = new Date();
+            apiCount = 0;
+
+            chrome.alarms.clear('refresh', function (wasCleared) {
+                chrome.alarms.create('refresh', {periodInMinutes: refreshPeriodMinutes});
+            });
+
+            asyncGetWithTimeout('Repositories',
+                repositoriesData,
+                randomId,
+                authToken,
+                'https://api.github.com/orgs/' + organization + '/repos',
+                1,
+                getRepositories,
+                {reposIgnored: reposIgnored})
+        } else {
+            console.log('No oauth token or organization');
+            delete localStorage.notificationCount;
+            updateIcon();
+        }
+    });
+}
+
+function getRepositories(cumulativeRepositoryData, randomId, authToken, params, response) {
     // console.log(response);
 
     for (var i = 0, repository; repository = response[i]; i++) {
@@ -211,6 +225,7 @@ function getRepositories(cumulativeRepositoryData, authToken, params, response) 
 
         asyncGetWithTimeout('Pull Requests ' + fullName,
             cumulativeRepositoryData,
+            randomId,
             authToken,
             'https://api.github.com/repos/' + fullName + '/pulls?state=open&sort=created&direction=asc',
             1,
@@ -219,12 +234,12 @@ function getRepositories(cumulativeRepositoryData, authToken, params, response) 
     }
 }
 
-function getRepositoryPullRequests(cumulativeRepositoryData, authToken, params, response) {
+function getRepositoryPullRequests(cumulativeRepositoryData, randomId, authToken, params, response) {
     var repoData = params.repoData;
     var repositoryFullName = params.repoData.full_name;
 
     if (response.length > 0) {
-        console.log(repositoryFullName + ':');
+        // console.log(repositoryFullName + ':');
         // console.log(pullRequestArray);
     }
 
@@ -286,6 +301,7 @@ function getRepositoryPullRequests(cumulativeRepositoryData, authToken, params, 
 
         asyncGetWithTimeout('Pull Request ' + repositoryFullName,
             cumulativeRepositoryData,
+            randomId,
             authToken,
             'https://api.github.com/repos/' + repositoryFullName + '/pulls/' + pullRequestNumber,
             null,
@@ -303,7 +319,7 @@ function getRepositoryPullRequests(cumulativeRepositoryData, authToken, params, 
     return;
 }
 
-function getPullRequest(cumulativeRepositoryData, authToken, params, response) {
+function getPullRequest(cumulativeRepositoryData, randomId, authToken, params, response) {
     var repositoryFullName = params.repositoryFullName;
     var pullRequestData = params.pullRequestData;
     var pullRequestNumber = params.pullRequestNumber;
@@ -322,8 +338,9 @@ function getPullRequest(cumulativeRepositoryData, authToken, params, response) {
 
     asyncGetWithTimeout('Reviews ' + repositoryFullName,
         cumulativeRepositoryData,
+        randomId,
         authToken,
-        'https://api.github.com/repos/' + repositoryFullName + '/pulls/' + pullRequestNumber,
+        'https://api.github.com/repos/' + repositoryFullName + '/pulls/' + pullRequestNumber + '/reviews',
         1,
         getPullRequestReviews,
         {
@@ -333,13 +350,13 @@ function getPullRequest(cumulativeRepositoryData, authToken, params, response) {
         });
 }
 
-function getPullRequestReviews(cumulativeRepositoryData, authToken, params, response) {
+function getPullRequestReviews(cumulativeRepositoryData, randomId, authToken, params, response) {
     var repositoryFullName = params.repositoryFullName;
     var pullRequestNumber = params.pullRequestNumber;
     var pullRequestData = params.pullRequestData;
 
-    // console.log(repositoryFullName + '/' + pullRequestNumber + '/reviewers:');
-    // console.log(response);
+    console.log(repositoryFullName + '/' + pullRequestNumber + '/reviewers:');
+    console.log(response);
 
     var latestUniqueReviewers = {};
     for (var j = 0, reviewer; reviewer = response[j]; j++) {
@@ -390,6 +407,7 @@ function getPullRequestReviews(cumulativeRepositoryData, authToken, params, resp
 
     asyncGetWithTimeout('Labels ' + repositoryFullName,
         cumulativeRepositoryData,
+        randomId,
         authToken,
         'https://api.github.com/repos/' + repositoryFullName + '/issues/' + pullRequestNumber,
         null,
@@ -399,10 +417,9 @@ function getPullRequestReviews(cumulativeRepositoryData, authToken, params, resp
             pullRequestNumber: pullRequestNumber,
             pullRequestData: pullRequestData
         });
-    // getPullRequestLabelsTimeout(authToken, repositoryFullName, pullRequestData);
 }
 
-function getPullRequestLabels(cumulativeRepositoryData, authToken, params, response) {
+function getPullRequestLabels(cumulativeRepositoryData, randomId, authToken, params, response) {
     var repositoryFullName = params.repositoryFullName;
     var pullRequestNumber = params.pullRequestNumber;
     var pullRequestData = params.pullRequestData;
@@ -444,26 +461,18 @@ function onAlarm(alarm) {
     }
 }
 
-function getPollDelay() {
-    var randomness = Math.random() * 2;
-    var exponent = Math.pow(2, localStorage.requestFailureCount || 0);
-    var multiplier = Math.max(randomness * exponent, 1);
-    var delay = Math.min(multiplier * pollIntervalMinutesMin, pollIntervalMinutesMax);
-    return Math.round(delay);
-}
-
 function createAlarm() {
     chrome.alarms.get('refresh', function (alarm) {
         if (alarm) {
             // Nothing
         } else {
-            chrome.alarms.create('refresh', {periodInMinutes: getPollDelay()});
+            chrome.alarms.create('refresh', {periodInMinutes: refreshPeriodMinutes});
         }
     });
 }
 
 chrome.browserAction.onClicked.addListener(goToIndexPage);
-// chrome.alarms.onAlarm.addListener(onAlarm);
+chrome.alarms.onAlarm.addListener(onAlarm);
 
 loadData();
-// chrome.alarms.create('watchdog', {periodInMinutes: 5});
+chrome.alarms.create('watchdog', {periodInMinutes: watchdogPeriodMinutes});

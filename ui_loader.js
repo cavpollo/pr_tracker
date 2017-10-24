@@ -39,6 +39,10 @@ function sortRepositoryData(repositoriesData) {
                 return a.username.localeCompare(b.username);
             });
 
+            pullRequest.dismissed_reviewers.sort(function (a, b) {
+                return a.username.localeCompare(b.username);
+            });
+
             pullRequest.labels.sort(function (a, b) {
                 return a.name.localeCompare(b.name);
             });
@@ -51,13 +55,14 @@ function sortRepositoryData(repositoriesData) {
 function renderRepositoryData(repositoriesData) {
     sortRepositoryData(repositoriesData);
 
-    // console.log(repositoriesData);
+    console.log(repositoriesData);
 
     var repositoriesDiv = document.getElementById('repositories');
 
     var repositoriesHtml = '';
 
     var doneLoading = true;
+    var errorLoading = false;
 
     for (var i = 0, repository; repository = repositoriesData[i]; i++) {
         if (repository.pull_requests.length === 0) {
@@ -69,13 +74,17 @@ function renderRepositoryData(repositoriesData) {
         repositoryHtml += '<div>\n';
 
         for (var j = 0, pullRequest; pullRequest = repository.pull_requests[j]; j++) {
-            if(pullRequest.status !== 'LOADED'){
+            if (pullRequest.status !== 'LOADED') {
                 doneLoading = false;
+            }
+            if (pullRequest.status === 'ERROR') {
+                errorLoading = true;
             }
 
             var approved = pullRequest.disapproved_reviewers.length === 0 && pullRequest.approved_reviewers.length > 0;
+            var noApprovals = pullRequest.disapproved_reviewers.length === 0 && pullRequest.approved_reviewers.length === 0;
             var canBeMerged = pullRequest.mergeable !== null && pullRequest.mergeable === true;
-            var statusText = approved ? (canBeMerged ? 'ALL GOOD' : 'CONFLICTS MUST BE FIXED') : 'CHANGES REQUESTED';
+            var statusText = approved ? (canBeMerged ? 'ALL GOOD' : 'CONFLICTS MUST BE FIXED') : (noApprovals ? 'APPROVAL REQUIRED' : 'CHANGES REQUESTED');
             var createdDate = new Date(pullRequest.created_at);
 
             var pullRequestHTML = '<div style="margin: 0 0 8px 0; padding: 2px 8px 8px 8px; background-color: #ffffff; border-radius: 4px;">\n';
@@ -195,10 +204,14 @@ function renderRepositoryData(repositoriesData) {
 
     var loadStatusHTML = '';
     loadStatusHTML += '<div>\n';
-    if(doneLoading) {
+    if (doneLoading) {
         loadStatusHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #3ab400; border-radius: 18px;" title="DONE LOADING" alt="DONE LOADING"></div>\n';
-    }else{
-        loadStatusHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #b2b400; border-radius: 18px;" title="LOADING" alt="LOADING"></div>\n';
+    } else {
+        if (errorLoading) {
+            loadStatusHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #b40004; border-radius: 18px;" title="ERROR LOADING" alt="ERROR LOADING"></div>\n';
+        } else {
+            loadStatusHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #b2b400; border-radius: 18px;" title="LOADING" alt="LOADING"></div>\n';
+        }
     }
     loadStatusHTML += '</div>\n';
 
