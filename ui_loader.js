@@ -46,8 +46,8 @@ function sortRepositoryData(repositoriesData) {
     }
 }
 
-// TODO: Mark the status of the respositories as RENDERED once they have been drawn
-//       and selectively redraw them when needed
+// TODO: Mark the status of the repositories as RENDERED once they have been drawn
+//       and selectively redraw them when needed(?)
 function renderRepositoryData(repositoriesData) {
     sortRepositoryData(repositoriesData);
 
@@ -56,6 +56,8 @@ function renderRepositoryData(repositoriesData) {
     var repositoriesDiv = document.getElementById('repositories');
 
     var repositoriesHtml = '';
+
+    var doneLoading = true;
 
     for (var i = 0, repository; repository = repositoriesData[i]; i++) {
         if (repository.pull_requests.length === 0) {
@@ -67,22 +69,25 @@ function renderRepositoryData(repositoriesData) {
         repositoryHtml += '<div>\n';
 
         for (var j = 0, pullRequest; pullRequest = repository.pull_requests[j]; j++) {
+            if(pullRequest.status !== 'LOADED'){
+                doneLoading = false;
+            }
 
             var approved = pullRequest.disapproved_reviewers.length === 0 && pullRequest.approved_reviewers.length > 0;
-            var statusText = approved ? (canMerged ? 'ALL GOOD' : 'CONFLICTS MUST BE FIXED') : 'CHANGES REQUESTED';
-            var canMerged = pullRequest.mergeable !== null && pullRequest.mergeable === true;
+            var canBeMerged = pullRequest.mergeable !== null && pullRequest.mergeable === true;
+            var statusText = approved ? (canBeMerged ? 'ALL GOOD' : 'CONFLICTS MUST BE FIXED') : 'CHANGES REQUESTED';
             var createdDate = new Date(pullRequest.created_at);
 
             var pullRequestHTML = '<div style="margin: 0 0 8px 0; padding: 2px 8px 8px 8px; background-color: #ffffff; border-radius: 4px;">\n';
             pullRequestHTML += '<table>\n';
             pullRequestHTML += '<tr>\n';
             pullRequestHTML += '<td>\n';
-            pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: ' + (approved ? (canMerged ? '#00ae11' : '#ddde00') : '#b40900') + '; border-radius: 4px;" title="' + statusText + '" alt="' + statusText + '"></div>\n';
+            pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: ' + (approved ? (canBeMerged ? '#00ae11' : '#ddde00') : '#b40900') + '; border-radius: 4px;" title="' + statusText + '" alt="' + statusText + '"></div>\n';
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td>\n';
-            pullRequestHTML += '<h3><a href="' + pullRequest.url + '">' + pullRequest.title + '</a>' + (pullRequest.status !== 'LOADED' ? ' - Loading Data, please reload.' : '') + '</h3>\n';
+            pullRequestHTML += '<h3><a href="' + pullRequest.url + '">' + pullRequest.title + '</a>' + (pullRequest.status !== 'LOADED' ? ' - Loading Data, please wait.' : '') + '</h3>\n';
             pullRequestHTML += '<p style="margin-left: 8px;"><b>' + pullRequest.head_name + '</b> --merge into--&gt; <b>' + pullRequest.base_name + '</b></p>\n';
-            pullRequestHTML += '<p style="margin-left: 8px;">Created ' + formatDate(createdDate) + ' - ' + pullRequest.changed_files + ' files ' + '</p>\n';
+            pullRequestHTML += '<p style="margin-left: 8px;">Created ar ' + formatDate(createdDate) + ' by ' + pullRequest.created_by + ' - ' + pullRequest.changed_files + ' files ' + '</p>\n';
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td>\n';
             pullRequestHTML += '<div style="width: 32px;"></div>\n';
@@ -147,13 +152,22 @@ function renderRepositoryData(repositoriesData) {
                 pullRequestHTML += '</div>\n';
             }
 
+            for (var p = 0, reviewer; reviewer = pullRequest.dismissed_reviewers[p]; p++) {
+                pullRequestHTML += '<div>\n';
+                pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #00a8a3; border-radius: 4px;" title="DISMISSED" alt="DISMISSED"></div>\n';
+                pullRequestHTML += '<a href="' + reviewer.url + '">\n';
+                pullRequestHTML += '<img src="' + reviewer.avatar_url + '" style="height: 36px; width: 36px;" title="' + reviewer.username + '" alt="' + reviewer.username + '" />\n';
+                pullRequestHTML += '</a>\n';
+                pullRequestHTML += '</div>\n';
+            }
+
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td>\n';
             pullRequestHTML += '<div style="width: 16px;"></div>\n';
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td>\n';
 
-            for (var p = 0, label; label = pullRequest.labels[p]; p++) {
+            for (var q = 0, label; label = pullRequest.labels[q]; q++) {
                 pullRequestHTML += '<div>\n';
                 pullRequestHTML += '<div style="width: 72px; height: 36px; line-height: 36px; display: inline-block; background-color: #' + label.color + '; vertical-align:middle; text-align:center; border-radius: 4px;">\n';
                 pullRequestHTML += '<b>' + label.name + '</b>\n';
@@ -176,6 +190,19 @@ function renderRepositoryData(repositoriesData) {
     }
 
     repositoriesDiv.innerHTML = repositoriesHtml;
+
+    var loadStatusDiv = document.getElementById('status');
+
+    var loadStatusHTML = '';
+    loadStatusHTML += '<div>\n';
+    if(doneLoading) {
+        loadStatusHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #3ab400; border-radius: 18px;" title="DONE LOADING" alt="DONE LOADING"></div>\n';
+    }else{
+        loadStatusHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #b2b400; border-radius: 18px;" title="LOADING" alt="LOADING"></div>\n';
+    }
+    loadStatusHTML += '</div>\n';
+
+    loadStatusDiv.innerHTML = loadStatusHTML;
 }
 
 function formatDate(date) {
