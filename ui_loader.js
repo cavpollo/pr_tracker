@@ -151,7 +151,7 @@ function renderRepositoryData(userData, repositoriesData) {
             pullRequestHTML += '<td style="vertical-align: bottom;">\n';
 
 
-            for (var l = 0, reviewer; reviewer = pullRequest.disapproved_reviewers[l]; l++) {
+            for (var k = 0, reviewer; reviewer = pullRequest.disapproved_reviewers[k]; k++) {
                 if(username === reviewer.username){
                     interacted = true;
                 }
@@ -164,7 +164,20 @@ function renderRepositoryData(userData, repositoriesData) {
                 pullRequestHTML += '</div>\n';
             }
 
-            for (var m = 0, reviewer; reviewer = pullRequest.comment_reviewers[m]; m++) {
+            for (var k = 0, reviewer; reviewer = pullRequest.comment_reviewers[k]; k++) {
+
+                var commentedOnSelf = false;
+                for (var l = 0, assignee; assignee = pullRequest.assignees[l]; l++) {
+                    if(assignee.username === reviewer.username) {
+                        commentedOnSelf = true;
+                        break;
+                    }
+                }
+
+                if(commentedOnSelf || pullRequest.created_by === reviewer.username) {
+                    continue;
+                }
+
                 if(username === reviewer.username){
                     interacted = true;
                 }
@@ -177,7 +190,7 @@ function renderRepositoryData(userData, repositoriesData) {
                 pullRequestHTML += '</div>\n';
             }
 
-            for (var n = 0, reviewer; reviewer = pullRequest.pending_reviewers[n]; n++) {
+            for (var k = 0, reviewer; reviewer = pullRequest.pending_reviewers[k]; k++) {
                 if(username === reviewer.username){
                     imPending = true;
                     interacted = true;
@@ -191,7 +204,7 @@ function renderRepositoryData(userData, repositoriesData) {
                 pullRequestHTML += '</div>\n';
             }
 
-            for (var o = 0, reviewer; reviewer = pullRequest.approved_reviewers[o]; o++) {
+            for (var k = 0, reviewer; reviewer = pullRequest.approved_reviewers[k]; k++) {
                 if(username === reviewer.username){
                     interacted = true;
                 }
@@ -204,13 +217,13 @@ function renderRepositoryData(userData, repositoriesData) {
                 pullRequestHTML += '</div>\n';
             }
 
-            for (var p = 0, reviewer; reviewer = pullRequest.dismissed_reviewers[p]; p++) {
+            for (var k = 0, reviewer; reviewer = pullRequest.dismissed_reviewers[k]; k++) {
                 if(username === reviewer.username){
                     interacted = true;
                 }
 
                 pullRequestHTML += '<div>\n';
-                pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #00a8a3; border-radius: 4px;" title="DISMISSED" alt="DISMISSED"></div>\n';
+                pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #55007f; border-radius: 4px;" title="DISMISSED" alt="DISMISSED"></div>\n';
                 pullRequestHTML += '<a href="' + reviewer.url + '">\n';
                 pullRequestHTML += '<img src="' + reviewer.avatar_url + '" style="height: 36px; width: 36px;" title="' + reviewer.username + '" alt="' + reviewer.username + '" />\n';
                 pullRequestHTML += '</a>\n';
@@ -223,7 +236,7 @@ function renderRepositoryData(userData, repositoriesData) {
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td>\n';
 
-            for (var q = 0, label; label = pullRequest.labels[q]; q++) {
+            for (var k = 0, label; label = pullRequest.labels[k]; k++) {
                 pullRequestHTML += '<div>\n';
                 pullRequestHTML += '<div style="width: 72px; height: 36px; line-height: 36px; display: inline-block; background-color: #' + label.color + '; vertical-align:middle; text-align:center; border-radius: 4px;">\n';
                 pullRequestHTML += '<b>' + label.name + '</b>\n';
