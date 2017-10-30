@@ -2,6 +2,7 @@ var requestTimeoutSeconds = 1000 * 2;
 var refreshPeriodMinutes = 5;
 var watchdogPeriodMinutes = 10;
 var maxRequestsPerSecond = 25;
+var userData = {};
 var repositoriesData = [];
 var apiTimeoutSeconds = 1;
 var apiTimeoutRandomSeconds = 10;
@@ -176,6 +177,7 @@ function loadData() {
             var randomId = Math.random();
             currentRandomId = randomId + 0;
 
+            userData = {};
             repositoriesData = [];
             startApiTime = new Date();
             apiCount = 0;
@@ -188,16 +190,41 @@ function loadData() {
                 repositoriesData,
                 randomId,
                 authToken,
-                'https://api.github.com/orgs/' + organization + '/repos',
+                'https://api.github.com/user',
                 1,
-                getRepositories,
-                {reposIgnored: reposIgnored})
+                getUserData,
+                {
+                    organization: organization,
+                    reposIgnored: reposIgnored
+                });
         } else {
             console.log('No oauth token or organization');
             delete localStorage.notificationCount;
             updateIcon();
         }
     });
+}
+
+function getUserData(cumulativeRepositoryData, randomId, authToken, params, response) {
+    console.log(response);
+
+    userData = {
+        id: response['id'],
+        username: response['login'],
+        name: response['name'],
+        avatar_url: response['avatar_url']
+    };
+
+    updateIcon();
+
+    asyncGetWithTimeout('Repositories',
+        cumulativeRepositoryData,
+        randomId,
+        authToken,
+        'https://api.github.com/orgs/' + params.organization + '/repos',
+        1,
+        getRepositories,
+        params);
 }
 
 function getRepositories(cumulativeRepositoryData, randomId, authToken, params, response) {

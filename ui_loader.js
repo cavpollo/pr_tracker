@@ -1,10 +1,10 @@
 document.addEventListener('DOMContentLoaded', function () {
     var backgroundPage = chrome.extension.getBackgroundPage();
-    renderRepositoryData(backgroundPage.repositoriesData);
+    renderRepositoryData(backgroundPage.userData, backgroundPage.repositoriesData);
 
     document.getElementById('reload').onclick = function () {
         var backgroundPage = chrome.extension.getBackgroundPage();
-        renderRepositoryData(backgroundPage.repositoriesData);
+        renderRepositoryData(backgroundPage.userData, backgroundPage.repositoriesData);
     }
 });
 
@@ -52,17 +52,28 @@ function sortRepositoryData(repositoriesData) {
 
 // TODO: Mark the status of the repositories as RENDERED once they have been drawn
 //       and selectively redraw them when needed(?)
-function renderRepositoryData(repositoriesData) {
+function renderRepositoryData(userData, repositoriesData) {
     sortRepositoryData(repositoriesData);
+
+    var username = userData['username'];
 
     console.log(repositoriesData);
 
     var repositoriesDiv = document.getElementById('repositories');
 
+    var prUserFilter = document.getElementById('pr_user_filter');
+    var prUserFilterValue = prUserFilter.options[prUserFilter.selectedIndex].value;
+
+    var prStatusFilter = document.getElementById('pr_status_filter');
+    var prStatusFilterValue = prStatusFilter.options[prStatusFilter.selectedIndex].value;
+
     var repositoriesHtml = '';
 
     var doneLoading = true;
     var errorLoading = false;
+
+    var repoCount = 0;
+    var prCount = 0;
 
     for (var i = 0, repository; repository = repositoriesData[i]; i++) {
         if (repository.pull_requests.length === 0) {
@@ -73,6 +84,9 @@ function renderRepositoryData(repositoriesData) {
         repositoryHtml += '<h2><a href="' + repository.url + '">' + repository.full_name + '</a></h2>\n';
         repositoryHtml += '<div>\n';
 
+        var anyPR = false;
+        var tempPrCount = 0;
+
         for (var j = 0, pullRequest; pullRequest = repository.pull_requests[j]; j++) {
             if (pullRequest.status !== 'LOADED') {
                 doneLoading = false;
@@ -80,6 +94,10 @@ function renderRepositoryData(repositoriesData) {
             if (pullRequest.status === 'ERROR') {
                 errorLoading = true;
             }
+
+            var imPending = false;
+            var isMine = false;
+            var interacted = false;
 
             var approved = pullRequest.disapproved_reviewers.length === 0 && pullRequest.approved_reviewers.length > 0;
             var noApprovals = pullRequest.disapproved_reviewers.length === 0 && pullRequest.approved_reviewers.length === 0;
@@ -96,21 +114,29 @@ function renderRepositoryData(repositoriesData) {
             pullRequestHTML += '<td>\n';
             pullRequestHTML += '<h3><a href="' + pullRequest.url + '">' + pullRequest.title + '</a>' + (pullRequest.status !== 'LOADED' ? ' - Loading Data, please wait.' : '') + '</h3>\n';
             pullRequestHTML += '<p style="margin-left: 8px;"><b>' + pullRequest.head_name + '</b> --merge into--&gt; <b>' + pullRequest.base_name + '</b></p>\n';
-            pullRequestHTML += '<p style="margin-left: 8px;">Created ar ' + formatDate(createdDate) + ' by ' + pullRequest.created_by + ' - ' + pullRequest.changed_files + ' files ' + '</p>\n';
+            pullRequestHTML += '<p style="margin-left: 8px;">Created at ' + formatDate(createdDate) + ' by ' + pullRequest.created_by + ' - ' + pullRequest.changed_files + ' files ' + '</p>\n';
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td>\n';
             pullRequestHTML += '<div style="width: 32px;"></div>\n';
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td style="vertical-align: bottom;">\n';
 
-            if (pullRequest.assignees.length === 0) {
+            if(username === pullRequest.created_by){
+                isMine = true;
+            }
 
+            if (pullRequest.assignees.length === 0) {
                 pullRequestHTML += '<div>\n';
                 pullRequestHTML += '<div style="width: 36px; height: 36px; line-height: 36px; display: inline-block; background-color: #444444; color: #ffffff; vertical-align:middle; text-align:center; border-radius: 4px;">?</div>\n';
                 pullRequestHTML += '</div>\n';
             }
 
             for (var k = 0, assignee; assignee = pullRequest.assignees[k]; k++) {
+                if(username === assignee.username){
+                    isMine = true;
+                    interacted = true;
+                }
+
                 pullRequestHTML += '<div>\n';
                 pullRequestHTML += '<a href="' + assignee.url + '">\n';
                 pullRequestHTML += '<img src="' + assignee.avatar_url + '" style="height: 36px; width: 36px;" title="' + assignee.username + '" alt="' + assignee.username + '" />\n';
@@ -126,6 +152,10 @@ function renderRepositoryData(repositoriesData) {
 
 
             for (var l = 0, reviewer; reviewer = pullRequest.disapproved_reviewers[l]; l++) {
+                if(username === reviewer.username){
+                    interacted = true;
+                }
+
                 pullRequestHTML += '<div>\n';
                 pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #b40900; border-radius: 4px;" title="REJECTED" alt="REJECTED"></div>\n';
                 pullRequestHTML += '<a href="' + reviewer.url + '">\n';
@@ -135,6 +165,10 @@ function renderRepositoryData(repositoriesData) {
             }
 
             for (var m = 0, reviewer; reviewer = pullRequest.comment_reviewers[m]; m++) {
+                if(username === reviewer.username){
+                    interacted = true;
+                }
+
                 pullRequestHTML += '<div>\n';
                 pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #a8a8a8; border-radius: 4px;" title="COMMENT" alt="COMMENT"></div>\n';
                 pullRequestHTML += '<a href="' + reviewer.url + '">\n';
@@ -144,6 +178,11 @@ function renderRepositoryData(repositoriesData) {
             }
 
             for (var n = 0, reviewer; reviewer = pullRequest.pending_reviewers[n]; n++) {
+                if(username === reviewer.username){
+                    imPending = true;
+                    interacted = true;
+                }
+
                 pullRequestHTML += '<div>\n';
                 pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #ddde00; border-radius: 4px;" title="INVITED" alt="INVITED"></div>\n';
                 pullRequestHTML += '<a href="' + reviewer.url + '">\n';
@@ -153,6 +192,10 @@ function renderRepositoryData(repositoriesData) {
             }
 
             for (var o = 0, reviewer; reviewer = pullRequest.approved_reviewers[o]; o++) {
+                if(username === reviewer.username){
+                    interacted = true;
+                }
+
                 pullRequestHTML += '<div>\n';
                 pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #00ae11; border-radius: 4px;" title="APPROVED" alt="APPROVED"></div>\n';
                 pullRequestHTML += '<a href="' + reviewer.url + '">\n';
@@ -162,6 +205,10 @@ function renderRepositoryData(repositoriesData) {
             }
 
             for (var p = 0, reviewer; reviewer = pullRequest.dismissed_reviewers[p]; p++) {
+                if(username === reviewer.username){
+                    interacted = true;
+                }
+
                 pullRequestHTML += '<div>\n';
                 pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #00a8a3; border-radius: 4px;" title="DISMISSED" alt="DISMISSED"></div>\n';
                 pullRequestHTML += '<a href="' + reviewer.url + '">\n';
@@ -189,13 +236,33 @@ function renderRepositoryData(repositoriesData) {
             pullRequestHTML += '</table>\n';
             pullRequestHTML += '</div>\n';
 
-            repositoryHtml += pullRequestHTML;
+
+            if(prUserFilterValue === 'all' ||
+                (prUserFilterValue === 'pending' && imPending) ||
+                (prUserFilterValue === 'mine' && isMine) ||
+                (prUserFilterValue === 'interacted' && interacted)) {
+
+                if (prStatusFilterValue === 'all' ||
+                    (prStatusFilterValue === 'no_reviews' && !approved && noApprovals) ||
+                    (prStatusFilterValue === 'rejected' && !approved && !noApprovals) ||
+                    (prStatusFilterValue === 'conflict' && approved && !canBeMerged) ||
+                    (prStatusFilterValue === 'approved' && approved && canBeMerged) ||
+                    (prStatusFilterValue === 'approved_no_pending' && approved && canBeMerged && pullRequest.pending_reviewers.length === 0)) {
+                    repositoryHtml += pullRequestHTML;
+                    tempPrCount++;
+                    anyPR = true;
+                }
+            }
         }
 
         repositoryHtml += '</div>\n';
         repositoryHtml += '</div>\n';
 
-        repositoriesHtml = repositoriesHtml + repositoryHtml;
+        if(anyPR === true) {
+            repositoriesHtml = repositoriesHtml + repositoryHtml;
+            prCount = prCount + tempPrCount;
+            repoCount++;
+        }
     }
 
     repositoriesDiv.innerHTML = repositoriesHtml;
@@ -204,6 +271,7 @@ function renderRepositoryData(repositoriesData) {
 
     var loadStatusHTML = '';
     loadStatusHTML += '<div>\n';
+    loadStatusHTML += repoCount + ' repositories - ' + prCount + ' pull requests - ';
     if (doneLoading) {
         loadStatusHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #3ab400; border-radius: 18px;" title="DONE LOADING" alt="DONE LOADING"></div>\n';
     } else {

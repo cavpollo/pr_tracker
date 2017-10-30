@@ -7,6 +7,20 @@
 <body>
 
 <h1>PR Tracker</h1>
+<select id="pr_user_filter">
+    <option value="all" selected>All</option>
+    <option value="pending">Pending to review by me</option>
+    <option value="mine">PRs I created/assigned</option>
+    <option value="interacted">PRs I interacted with</option>
+</select>
+<select id="pr_status_filter">
+    <option value="all" selected>All</option>
+    <option value="no_reviews">Not Reviewed</option>
+    <option value="rejected">Rejected</option>
+    <option value="conflict">Merge conflict</option>
+    <option value="approved">Approved</option>
+    <option value="approved_no_pending">Approved without Pending Reviews</option>
+</select>
 <button id="reload">Reload Data</button>
 <div id="status">
 </div>
