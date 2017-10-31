@@ -3,7 +3,7 @@
 
   "name": "PR Tracker",
   "description": "This extension will allow users to have a quick look at their github's pull requests information. (=')>",
-  "version": "1.0.5",
+  "version": "1.0.6",
 
   "browser_action": {
     "default_icon": "images/icon.png",
@@ -13,6 +13,12 @@
   "background": {
     "persistent": false,
     "page": "background.html"
+  },
+
+  "icons": {
+    "16": "icon_16.png",
+    "48": "icon_48.png",
+    "128": "icon_128.png"
   },
 
   "permissions": [

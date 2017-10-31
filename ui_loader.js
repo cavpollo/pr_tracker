@@ -69,8 +69,8 @@ function renderRepositoryData(userData, repositoriesData) {
 
     var repositoriesHtml = '';
 
-    var doneLoading = true;
-    var errorLoading = false;
+    var reposDoneLoading = true;
+    var reposErrorLoading = false;
 
     var repoCount = 0;
     var prCount = 0;
@@ -88,11 +88,21 @@ function renderRepositoryData(userData, repositoriesData) {
         var tempPrCount = 0;
 
         for (var j = 0, pullRequest; pullRequest = repository.pull_requests[j]; j++) {
-            if (pullRequest.status !== 'LOADED') {
-                doneLoading = false;
+            var prDoneLoading = true;
+            var prErrorLoading = false;
+
+            if (pullRequest.pr_status !== 'LOADED' ||
+                pullRequest.reviews_status !== 'LOADED' ||
+                pullRequest.labels_status !== 'LOADED') {
+                prDoneLoading = false;
+                reposDoneLoading = false;
             }
-            if (pullRequest.status === 'ERROR') {
-                errorLoading = true;
+
+            if (pullRequest.pr_status === 'ERROR' ||
+                pullRequest.reviews_status === 'ERROR' ||
+                pullRequest.labels_status === 'ERROR') {
+                prErrorLoading = true;
+                reposErrorLoading = true;
             }
 
             var imPending = false;
@@ -112,7 +122,7 @@ function renderRepositoryData(userData, repositoriesData) {
             pullRequestHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: ' + (approved ? (canBeMerged ? '#00ae11' : '#ddde00') : '#b40900') + '; border-radius: 4px;" title="' + statusText + '" alt="' + statusText + '"></div>\n';
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td>\n';
-            pullRequestHTML += '<h3><a href="' + pullRequest.url + '">' + pullRequest.title + '</a>' + (pullRequest.status !== 'LOADED' ? ' - Loading Data, please wait.' : '') + '</h3>\n';
+            pullRequestHTML += '<h3><a href="' + pullRequest.url + '">' + pullRequest.title + '</a>' + (prErrorLoading ? ' - Error loading data =(' : (prDoneLoading ? '' : ' - Loading data, please wait.')) + '</h3>\n';
             pullRequestHTML += '<p style="margin-left: 8px;"><b>' + pullRequest.head_name + '</b> --merge into--&gt; <b>' + pullRequest.base_name + '</b></p>\n';
             pullRequestHTML += '<p style="margin-left: 8px;">Created at ' + formatDate(createdDate) + ' by ' + pullRequest.created_by + ' - ' + pullRequest.changed_files + ' files ' + '</p>\n';
             pullRequestHTML += '</td>\n';
@@ -121,7 +131,7 @@ function renderRepositoryData(userData, repositoriesData) {
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td style="vertical-align: bottom;">\n';
 
-            if(username === pullRequest.created_by){
+            if (username === pullRequest.created_by) {
                 isMine = true;
             }
 
@@ -132,7 +142,7 @@ function renderRepositoryData(userData, repositoriesData) {
             }
 
             for (var k = 0, assignee; assignee = pullRequest.assignees[k]; k++) {
-                if(username === assignee.username){
+                if (username === assignee.username) {
                     isMine = true;
                     interacted = true;
                 }
@@ -152,7 +162,7 @@ function renderRepositoryData(userData, repositoriesData) {
 
 
             for (var k = 0, reviewer; reviewer = pullRequest.disapproved_reviewers[k]; k++) {
-                if(username === reviewer.username){
+                if (username === reviewer.username) {
                     interacted = true;
                 }
 
@@ -168,17 +178,17 @@ function renderRepositoryData(userData, repositoriesData) {
 
                 var commentedOnSelf = false;
                 for (var l = 0, assignee; assignee = pullRequest.assignees[l]; l++) {
-                    if(assignee.username === reviewer.username) {
+                    if (assignee.username === reviewer.username) {
                         commentedOnSelf = true;
                         break;
                     }
                 }
 
-                if(commentedOnSelf || pullRequest.created_by === reviewer.username) {
+                if (commentedOnSelf || pullRequest.created_by === reviewer.username) {
                     continue;
                 }
 
-                if(username === reviewer.username){
+                if (username === reviewer.username) {
                     interacted = true;
                 }
 
@@ -191,7 +201,7 @@ function renderRepositoryData(userData, repositoriesData) {
             }
 
             for (var k = 0, reviewer; reviewer = pullRequest.pending_reviewers[k]; k++) {
-                if(username === reviewer.username){
+                if (username === reviewer.username) {
                     imPending = true;
                     interacted = true;
                 }
@@ -205,7 +215,7 @@ function renderRepositoryData(userData, repositoriesData) {
             }
 
             for (var k = 0, reviewer; reviewer = pullRequest.approved_reviewers[k]; k++) {
-                if(username === reviewer.username){
+                if (username === reviewer.username) {
                     interacted = true;
                 }
 
@@ -218,7 +228,7 @@ function renderRepositoryData(userData, repositoriesData) {
             }
 
             for (var k = 0, reviewer; reviewer = pullRequest.dismissed_reviewers[k]; k++) {
-                if(username === reviewer.username){
+                if (username === reviewer.username) {
                     interacted = true;
                 }
 
@@ -250,7 +260,7 @@ function renderRepositoryData(userData, repositoriesData) {
             pullRequestHTML += '</div>\n';
 
 
-            if(prUserFilterValue === 'all' ||
+            if (prUserFilterValue === 'all' ||
                 (prUserFilterValue === 'pending' && imPending) ||
                 (prUserFilterValue === 'mine' && isMine) ||
                 (prUserFilterValue === 'interacted' && interacted)) {
@@ -271,8 +281,8 @@ function renderRepositoryData(userData, repositoriesData) {
         repositoryHtml += '</div>\n';
         repositoryHtml += '</div>\n';
 
-        if(anyPR === true) {
-            repositoriesHtml = repositoriesHtml + repositoryHtml;
+        if (anyPR === true) {
+            repositoriesHtml += repositoryHtml;
             prCount = prCount + tempPrCount;
             repoCount++;
         }
@@ -285,10 +295,10 @@ function renderRepositoryData(userData, repositoriesData) {
     var loadStatusHTML = '';
     loadStatusHTML += '<div>\n';
     loadStatusHTML += repoCount + ' repositories - ' + prCount + ' pull requests - ';
-    if (doneLoading) {
+    if (reposDoneLoading) {
         loadStatusHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #3ab400; border-radius: 18px;" title="DONE LOADING" alt="DONE LOADING"></div>\n';
     } else {
-        if (errorLoading) {
+        if (reposErrorLoading) {
             loadStatusHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #b40004; border-radius: 18px;" title="ERROR LOADING" alt="ERROR LOADING"></div>\n';
         } else {
             loadStatusHTML += '<div style="width: 36px; height: 36px; display: inline-block; background-color: #b2b400; border-radius: 18px;" title="LOADING" alt="LOADING"></div>\n';
