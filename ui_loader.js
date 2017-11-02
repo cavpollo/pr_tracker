@@ -9,16 +9,11 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function sortRepositoryData(repositoriesData) {
-    repositoriesData.sort(function (a, b) {
-        return a.full_name.localeCompare(b.full_name);
-    });
+    for (var repositoryKey in repositoriesData) {
+        var repository = repositoriesData[repositoryKey];
 
-    for (var i = 0, repository; repository = repositoriesData[i]; i++) {
-        repository.pull_requests.sort(function (a, b) {
-            return a.created_at.localeCompare(b.created_at);
-        });
-
-        for (var j = 0, pullRequest; pullRequest = repository.pull_requests[j]; j++) {
+        for (var pullRequestKey in repository.pull_requests) {
+            var pullRequest = repository.pull_requests[pullRequestKey];
             pullRequest.assignees.sort(function (a, b) {
                 return a.username.localeCompare(b.username);
             });
@@ -55,6 +50,8 @@ function sortRepositoryData(repositoriesData) {
 function renderRepositoryData(userData, repositoriesData) {
     sortRepositoryData(repositoriesData);
 
+    console.log(userData);
+
     var username = userData['username'];
 
     console.log(repositoriesData);
@@ -75,8 +72,11 @@ function renderRepositoryData(userData, repositoriesData) {
     var repoCount = 0;
     var prCount = 0;
 
-    for (var i = 0, repository; repository = repositoriesData[i]; i++) {
-        if (repository.pull_requests.length === 0) {
+    for (var repositoryKey in repositoriesData) {
+        var repository = repositoriesData[repositoryKey];
+        var pullRequests = repository.pull_requests;
+
+        if (pullRequests === undefined || Object.keys(pullRequests).length === 0 || repository.status === 'OLD') {
             continue;
         }
 
@@ -87,11 +87,17 @@ function renderRepositoryData(userData, repositoriesData) {
         var anyPR = false;
         var tempPrCount = 0;
 
-        for (var j = 0, pullRequest; pullRequest = repository.pull_requests[j]; j++) {
+        for (var pullRequestKey in pullRequests) {
+            var pullRequest = pullRequests[pullRequestKey];
+
+            if (pullRequest.pr_status === 'OLD') {
+                continue;
+            }
+
             var prDoneLoading = true;
             var prErrorLoading = false;
 
-            if (pullRequest.pr_status !== 'LOADED' ||
+            if (!(pullRequest.pr_status === 'LOADED' || pullRequest.pr_status === 'UNCHANGED') ||
                 pullRequest.reviews_status !== 'LOADED' ||
                 pullRequest.labels_status !== 'LOADED') {
                 prDoneLoading = false;
@@ -141,7 +147,7 @@ function renderRepositoryData(userData, repositoriesData) {
                 pullRequestHTML += '</div>\n';
             }
 
-            for (var k = 0, assignee; assignee = pullRequest.assignees[k]; k++) {
+            for (var i = 0, assignee; assignee = pullRequest.assignees[i]; i++) {
                 if (username === assignee.username) {
                     isMine = true;
                     interacted = true;
@@ -161,7 +167,7 @@ function renderRepositoryData(userData, repositoriesData) {
             pullRequestHTML += '<td style="vertical-align: bottom;">\n';
 
 
-            for (var k = 0, reviewer; reviewer = pullRequest.disapproved_reviewers[k]; k++) {
+            for (var i = 0, reviewer; reviewer = pullRequest.disapproved_reviewers[i]; i++) {
                 if (username === reviewer.username) {
                     interacted = true;
                 }
@@ -174,7 +180,7 @@ function renderRepositoryData(userData, repositoriesData) {
                 pullRequestHTML += '</div>\n';
             }
 
-            for (var k = 0, reviewer; reviewer = pullRequest.comment_reviewers[k]; k++) {
+            for (var i = 0, reviewer; reviewer = pullRequest.comment_reviewers[i]; i++) {
 
                 var commentedOnSelf = false;
                 for (var l = 0, assignee; assignee = pullRequest.assignees[l]; l++) {
@@ -200,7 +206,7 @@ function renderRepositoryData(userData, repositoriesData) {
                 pullRequestHTML += '</div>\n';
             }
 
-            for (var k = 0, reviewer; reviewer = pullRequest.pending_reviewers[k]; k++) {
+            for (var i = 0, reviewer; reviewer = pullRequest.pending_reviewers[i]; i++) {
                 if (username === reviewer.username) {
                     imPending = true;
                     interacted = true;
@@ -214,7 +220,7 @@ function renderRepositoryData(userData, repositoriesData) {
                 pullRequestHTML += '</div>\n';
             }
 
-            for (var k = 0, reviewer; reviewer = pullRequest.approved_reviewers[k]; k++) {
+            for (var i = 0, reviewer; reviewer = pullRequest.approved_reviewers[i]; i++) {
                 if (username === reviewer.username) {
                     interacted = true;
                 }
@@ -227,7 +233,7 @@ function renderRepositoryData(userData, repositoriesData) {
                 pullRequestHTML += '</div>\n';
             }
 
-            for (var k = 0, reviewer; reviewer = pullRequest.dismissed_reviewers[k]; k++) {
+            for (var i = 0, reviewer; reviewer = pullRequest.dismissed_reviewers[i]; i++) {
                 if (username === reviewer.username) {
                     interacted = true;
                 }
@@ -246,7 +252,7 @@ function renderRepositoryData(userData, repositoriesData) {
             pullRequestHTML += '</td>\n';
             pullRequestHTML += '<td>\n';
 
-            for (var k = 0, label; label = pullRequest.labels[k]; k++) {
+            for (var i = 0, label; label = pullRequest.labels[i]; i++) {
                 pullRequestHTML += '<div>\n';
                 pullRequestHTML += '<div style="width: 72px; height: 36px; line-height: 36px; display: inline-block; background-color: #' + label.color + '; vertical-align:middle; text-align:center; border-radius: 4px;">\n';
                 pullRequestHTML += '<b>' + label.name + '</b>\n';
