@@ -1,31 +1,187 @@
 <!DOCTYPE html>
-<html>
+<html class="no-js" lang="en" dir="ltr">
 <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PR Tracker</title>
+    <link rel="stylesheet" href="css/foundation/foundation.css">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/foundation/foundation-icons.css">
     <script src="ui_loader.js"></script>
 </head>
 <body>
 
-<h1>PR Tracker</h1>
-<select id="pr_user_filter">
-    <option value="all" selected>All</option>
-    <option value="pending">Pending to review by me</option>
-    <option value="mine">PRs I created/assigned</option>
-    <option value="interacted">PRs I interacted with</option>
-</select>
-<select id="pr_status_filter">
-    <option value="all" selected>All</option>
-    <option value="no_reviews">Not Reviewed</option>
-    <option value="rejected">Rejected</option>
-    <option value="conflict">Merge conflict</option>
-    <option value="approved">Approved</option>
-    <option value="approved_no_pending">Approved without Pending Reviews</option>
-</select>
-<button id="reload">Reload Data</button>
+<h1>PR Tracker <a id="panel-toggler" data-toggle="panel"><i class="fi-filter"></i></a></h1>
+
+
+<div class="callout" id="panel" data-toggler data-animate="hinge-in-from-top hinge-out-from-top" style="display: none;">
+    <h4>Select your filters</h4>
+    <div class="row">
+        <div class="small-4 columns">
+            Show all Pull Requests
+            <div class="switch">
+                <input class="switch-input" id="switch-all" type="checkbox" name="switch-all" data-toggle-all>
+                <label class="switch-paddle" for="switch-all">
+                    <span class="switch-active">Yes</span>
+                    <span class="switch-inactive">No</span>
+                </label>
+            </div>
+        </div>
+        <div class="small-4 columns">
+            Show Repositories Toggled
+            <div class="switch">
+                <input class="switch-input" id="switch-toggled" type="checkbox" name="switch-toggled">
+                <label class="switch-paddle" for="switch-toggled">
+                    <span class="switch-active">Yes</span>
+                    <span class="switch-inactive">No</span>
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="small-4 columns" style="background-color: lightcyan;">
+            <div>
+                Show pending to review by me
+                <div class="switch">
+                    <input class="switch-input" id="switch-user-pending-to-review" type="checkbox"
+                           name="switch-user-pending-to-review">
+                    <label class="switch-paddle" for="switch-user-pending-to-review">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                Show PRs I approved
+                <div class="switch">
+                    <input class="switch-input" id="switch-user-approved" type="checkbox" name="switch-user-approved">
+                    <label class="switch-paddle" for="switch-user-approved">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                Show PRs I rejected
+                <div class="switch">
+                    <input class="switch-input" id="switch-user-rejected" type="checkbox" name="switch-user-rejected">
+                    <label class="switch-paddle" for="switch-user-rejected">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                Show PRs I commented on
+                <div class="switch">
+                    <input class="switch-input" id="switch-user-commented" type="checkbox" name="switch-user-commented">
+                    <label class="switch-paddle" for="switch-user-commented">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="small-4 columns" style="background-color: lightyellow;">
+            <div>
+                Show PRs I created
+                <div class="switch">
+                    <input class="switch-input" id="switch-user-creator" type="checkbox" name="switch-user-creator">
+                    <label class="switch-paddle" for="switch-user-creator">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                Show PRs I'm assigned
+                <div class="switch">
+                    <input class="switch-input" id="switch-user-assigned" type="checkbox" name="switch-user-assigned">
+                    <label class="switch-paddle" for="switch-user-assigned">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                Show PRs I'm dismissed
+                <div class="switch">
+                    <input class="switch-input" id="switch-user-dismissed" type="checkbox" name="switch-user-dismissed">
+                    <label class="switch-paddle" for="switch-user-dismissed">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="small-4 columns" style="background-color: lightcyan;">
+            <div>
+                Show PRs with at least one dismissed review
+                <div class="switch">
+                    <input class="switch-input" id="switch-pr-dissmissed" type="checkbox" name="switch-pr-dissmissed">
+                    <label class="switch-paddle" for="switch-pr-dissmissed">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                Show rejected PRs
+                <div class="switch">
+                    <input class="switch-input" id="switch-pr-rejected" type="checkbox" name="switch-pr-rejected">
+                    <label class="switch-paddle" for="switch-pr-rejected">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                Show PRs with merge conflicts
+                <div class="switch">
+                    <input class="switch-input" id="switch-pr-merge-conflict" type="checkbox"
+                           name="switch-pr-merge-conflict">
+                    <label class="switch-paddle" for="switch-pr-merge-conflict">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                Show Not Reviewed PRs
+                <div class="switch">
+                    <input class="switch-input" id="switch-pr-not-reviewed" type="checkbox"
+                           name="switch-pr-not-reviewed">
+                    <label class="switch-paddle" for="switch-pr-not-reviewed">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                Show Approved PRs
+                <div class="switch">
+                    <input class="switch-input" id="switch-pr-approved" type="checkbox" name="switch-pr-approved">
+                    <label class="switch-paddle" for="switch-pr-approved">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="status">
 </div>
+
 <div id="repositories">
- =)
+    =)
 </div>
+
+<script src="js/vendor/jquery.js"></script>
+<script src="js/vendor/what-input.js"></script>
+<script src="js/vendor/foundation.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

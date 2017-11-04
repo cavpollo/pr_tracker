@@ -1,0 +1,108 @@
+.repository {
+    background-color: #93bcff;
+    padding: 0px 10px 2px 8px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+}
+
+.repository-title {
+    font-size: 28px;
+    color: #000000;
+}
+
+.repository-title-text {
+    margin-left: 8px;
+    color: #000000;
+}
+
+.pull-request {
+    margin-bottom: 8px;
+    background-color: #ffffff;
+    border-radius: 4px;
+    box-shadow: #0a0a0a 2px 2px 2px;
+    padding-bottom: 2px;
+}
+
+.pull-request-column {
+    /*border-left: #000000 1px solid;*/
+    /*border-right: #000000 1px solid;*/
+}
+
+.pull-request-status-block {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    box-shadow: #0a0a0a 2px 2px 2px;
+    line-height: 48px;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.pull-request-icon-status {
+    font-size: 24px;
+    display: inline-block;
+}
+.pull-request-icon-status:hover {
+    font-size: 32px;
+    display: inline-block;
+}
+
+div.user-badge {
+    width: 36px;
+    height: 36px;
+    line-height: 28px;
+    display: inline-block;
+    background-color: #444444;
+    color: #ffffff;
+    vertical-align: middle;
+    text-align: center;
+    border: 4px solid #222222;
+    border-radius: 32px;
+    margin: 2px 3px 3px 2px;
+    box-shadow: #0a0a0a 2px 2px 2px;
+}
+
+div.user-badge:hover {
+    width: 40px;
+    height: 40px;
+    border: 5px solid #000000;
+    border-radius: 36px;
+    margin: 1px 2px 2px 1px;
+    box-shadow: #0a0a0a 1px 1px 1px;
+}
+
+a.user-badge {
+    display:inline-block;
+    border: 4px solid;
+    border-radius: 32px;
+    margin: 2px 3px 3px 2px;
+    box-shadow: #0a0a0a 2px 2px 2px;
+}
+
+a.user-badge:hover {
+    border: 5px solid;
+    margin: 1px 2px 2px 1px;
+    box-shadow: #0a0a0a 1px 1px 1px;
+}
+
+img.user-badge {
+    height: 36px;
+    width: 36px;
+    border-radius: 32px;
+}
+
+.pr-label {
+    width: 72px;
+    min-height: 36px;
+    display: inline-block;
+    vertical-align:middle;
+    text-align:center;
+    border-radius: 4px;
+    padding: 8px;
+    font-weight: bold;
+}

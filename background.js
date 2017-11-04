@@ -200,14 +200,14 @@ function doTimeout(methodName, randomId, authToken, url, page, callback, errorCa
 
 function asyncGet(methodName, randomId, authToken, url, page, callback, errorCallback, params) {
     if (randomId !== currentRandomId) {
-        console.error(methodName + ' Request is too old: ' + currentRandomId + ' !== ' + randomId);
+        console.debug(methodName + ' Request is too old: ' + currentRandomId + ' !== ' + randomId);
         return;
     }
 
     var xhr = new XMLHttpRequest();
 
     if (url === undefined) {
-        console.error(methodName + ' No url');
+        console.debug(methodName + ' No url');
         if (errorCallback) {
             errorCallback(methodName, randomId, params);
         }
@@ -270,7 +270,7 @@ function asyncGet(methodName, randomId, authToken, url, page, callback, errorCal
 
                 if (callback) {
                     if (randomId !== currentRandomId) {
-                        console.error(methodName + ' Request is too old: ' + currentRandomId + ' !== ' + randomId);
+                        console.debug(methodName + ' Request is too old: ' + currentRandomId + ' !== ' + randomId);
                         return;
                     }
 
@@ -322,7 +322,7 @@ function loadData() {
             apiCount = 0;
             globalError = false;
 
-            console.log('LOAD DATA: ' + randomId);
+            console.debug('LOAD DATA: ' + randomId);
 
             removeOldRepositories();
 
@@ -532,7 +532,8 @@ function getRepositoryPullRequests(randomId, authToken, params, response) {
 
             // TODO: Count how many comments are left unanswered by the assignee
         } else {
-            console.log(repositoryFullName + ': ' + pullRequest.number + ' UNCHANGED');
+            console.debug(repositoryFullName + ': ' + pullRequest.number + ' UNCHANGED');
+
             existingPullRequest.pr_status = UNCHANGED;
         }
     }
