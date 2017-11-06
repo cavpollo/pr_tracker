@@ -180,26 +180,40 @@ function getPullRequestCol1Element(pullRequest) {
     pullRequestIconStatusElement.className = 'pull-request-icon-status';
 
     var statusText = '?';
-    if (pullRequest.disapproved_reviewers.length === 0) {
-        if(pullRequest.approved_reviewers.length > 0) {
-            if (pullRequest.mergeable !== null && pullRequest.mergeable === true) {
-                statusText = 'ALL GOOD';
-                pullRequestStatusElement.style.backgroundColor = '#00ae11';
-                pullRequestIconStatusElement.className += ' fi-check';
+    if (pullRequest.pr_status === 'LOADED' || pullRequest.pr_status === 'UNCHANGED') {
+        if (pullRequest.disapproved_reviewers.length === 0) {
+            if (pullRequest.approved_reviewers.length > 0) {
+                if (pullRequest.mergeable !== null && pullRequest.mergeable === true) {
+                    statusText = 'ALL GOOD';
+                    pullRequestStatusElement.style.backgroundColor = '#00ae11';
+                    pullRequestIconStatusElement.className += ' fi-check';
+                } else {
+                    statusText = 'CONFLICTS MUST BE FIXED';
+                    pullRequestStatusElement.style.backgroundColor = '#ddde00';
+                    pullRequestIconStatusElement.className += ' fi-wrench';
+                }
             } else {
-                statusText = 'CONFLICTS MUST BE FIXED';
-                pullRequestStatusElement.style.backgroundColor = '#ddde00';
-                pullRequestIconStatusElement.className += ' fi-wrench';
+                statusText = 'APPROVAL REQUIRED';
+                pullRequestStatusElement.style.backgroundColor = '#ff8415';
+                pullRequestIconStatusElement.className += ' fi-torsos-all';
             }
         } else {
-            statusText = 'APPROVAL REQUIRED';
-            pullRequestStatusElement.style.backgroundColor = '#ff8415';
-            pullRequestIconStatusElement.className += ' fi-torsos-all';
+            statusText = 'CHANGES REQUESTED';
+            pullRequestStatusElement.style.backgroundColor = '#b40900';
+            pullRequestIconStatusElement.className += ' fi-x';
         }
     } else {
-        statusText = 'CHANGES REQUESTED';
-        pullRequestStatusElement.style.backgroundColor = '#b40900';
-        pullRequestIconStatusElement.className += ' fi-x';
+        if (pullRequest.pr_status === 'ERROR' ||
+            pullRequest.reviews_status === 'ERROR' ||
+            pullRequest.labels_status === 'ERROR') {
+            statusText = 'ERROR LOADING DATA';
+            pullRequestStatusElement.style.backgroundColor = '#a800a2';
+            pullRequestIconStatusElement.className += ' fi-skull';
+        } else {
+            statusText = 'DATA IS LOADING';
+            pullRequestStatusElement.style.backgroundColor = '#a8a8a8';
+            pullRequestIconStatusElement.className += ' fi-refresh';
+        }
     }
 
     pullRequestStatusElement.title = statusText;
@@ -215,22 +229,45 @@ function getPullRequestCol2Element(pullRequest) {
     var createdDate = new Date(pullRequest.created_at);
 
     var pullRequestColElement = document.createElement('div');
-    pullRequestColElement.className = 'small-7 pull-request-column';
+    pullRequestColElement.className = 'small-7 pull-request-column text-no-overflow';
 
     var pullRequestTitleElement = document.createElement('a');
+    pullRequestTitleElement.className = 'pull-request-title';
     pullRequestTitleElement.href = pullRequest.url;
     pullRequestTitleElement.innerHTML = pullRequest.title;
 
-    //(prErrorLoading ? ' - Error loading data =(' : (prDoneLoading ? '' : ' - Loading data, please wait.'))
+    var pullRequestFromBranchElement = document.createElement('div');
 
-    var pullRequestBranchElement = document.createElement('div');
-    pullRequestBranchElement.innerHTML = pullRequest.head_name + ' --merge into--&gt; ' + pullRequest.base_name;
+    var pullRequestFromBranchTitleElement = document.createElement('span');
+    pullRequestFromBranchTitleElement.className = 'pull-request-branch-title';
+    pullRequestFromBranchTitleElement.innerHTML = 'From: ';
+
+    var pullRequestFromBranchContentElement = document.createElement('span');
+    pullRequestFromBranchContentElement.innerHTML = pullRequest.head_name;
+
+    pullRequestFromBranchElement.appendChild(pullRequestFromBranchTitleElement);
+    pullRequestFromBranchElement.appendChild(pullRequestFromBranchContentElement);
+
+
+    var pullRequestToBranchElement = document.createElement('div');
+
+    var pullRequestToBranchTitleElement = document.createElement('span');
+    pullRequestToBranchTitleElement.className = 'pull-request-branch-title';
+    pullRequestToBranchTitleElement.innerHTML = 'To: ';
+
+    var pullRequestToBranchContentElement = document.createElement('span');
+    pullRequestToBranchContentElement.innerHTML = pullRequest.base_name;
+
+    pullRequestToBranchElement.appendChild(pullRequestToBranchTitleElement);
+    pullRequestToBranchElement.appendChild(pullRequestToBranchContentElement);
+
 
     var pullRequestInfoElement = document.createElement('div');
     pullRequestInfoElement.innerHTML = 'Created at ' + formatDate(createdDate) + ' by ' + pullRequest.created_by + ' - ' + pullRequest.changed_files + ' files';
 
     pullRequestColElement.appendChild(pullRequestTitleElement);
-    pullRequestColElement.appendChild(pullRequestBranchElement);
+    pullRequestColElement.appendChild(pullRequestFromBranchElement);
+    pullRequestColElement.appendChild(pullRequestToBranchElement);
     pullRequestColElement.appendChild(pullRequestInfoElement);
     return pullRequestColElement;
 }

@@ -6,7 +6,7 @@
 }
 
 .repository-title {
-    font-size: 28px;
+    font-size: 24px;
     color: #000000;
 }
 
@@ -51,6 +51,21 @@
     font-size: 32px;
     display: inline-block;
 }
+
+.pull-request-title {
+    font-size: 18px;
+}
+
+.text-no-overflow {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pull-request-branch-title {
+    font-weight: bold;
+}
+
 
 div.user-badge {
     width: 36px;
@@ -105,4 +120,6 @@ img.user-badge {
     border-radius: 4px;
     padding: 8px;
     font-weight: bold;
+    margin: 2px 4px 4px 2px;
+    box-shadow: #0a0a0a 2px 2px 2px;
 }
