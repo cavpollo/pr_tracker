@@ -45,6 +45,12 @@ function sortRepositoryData(repositoriesData) {
     }
 }
 
+function toggleRepositoryPullRequests (value, repositoryPullRequestsElement) {
+    if (value) {
+        repositoryPullRequestsElement.className += ' hide-repository-content';
+    }
+}
+
 function renderRepositoryData(userData, repositoriesData) {
     sortRepositoryData(repositoriesData);
 
@@ -72,9 +78,15 @@ function renderRepositoryData(userData, repositoriesData) {
         repositoryElement.className = 'repository row';
 
         var repositoryContentElement = document.createElement('div');
-        repositoryContentElement.className = 'small-12 columns';
+        repositoryContentElement.className = 'small-12';
 
-        var repositoryTitleElement = getRepositoryTitleElement(repository);
+        var repositoryPullRequestsElement = document.createElement('div');
+        repositoryPullRequestsElement.id = repository.id;
+        repositoryPullRequestsElement.className = 'pull-requests';
+
+        getValue('switch-toggled', toggleRepositoryPullRequests, repositoryPullRequestsElement);
+
+        var repositoryTitleElement = getRepositoryTitleElement(repository, pullRequests);
         repositoryContentElement.appendChild(repositoryTitleElement);
 
         for (var pullRequestKey in pullRequests) {
@@ -83,6 +95,20 @@ function renderRepositoryData(userData, repositoriesData) {
             if (pullRequest.pr_status === 'OLD') {
                 continue;
             }
+
+            var pullRequestBlobElement = document.createElement('div');
+            pullRequestBlobElement.className = 'pull-request';
+
+            var pullRequestTitleElement = document.createElement('div');
+            pullRequestTitleElement.className = 'pull-request-title';
+
+            var pullRequestTitleLinkElement = document.createElement('a');
+            pullRequestTitleLinkElement.className = 'pull-request-title-link';
+            pullRequestTitleLinkElement.href = pullRequest.url;
+            pullRequestTitleLinkElement.innerHTML = pullRequest.title;
+            pullRequestTitleElement.appendChild(pullRequestTitleLinkElement);
+
+            pullRequestBlobElement.appendChild(pullRequestTitleElement);
 
             var prDoneLoading = true;
             var prErrorLoading = false;
@@ -102,7 +128,7 @@ function renderRepositoryData(userData, repositoriesData) {
             }
 
             var pullRequestElement = document.createElement('div');
-            pullRequestElement.className = 'pull-request row';
+            pullRequestElement.className = 'row pull-request-row';
 
             if (pullRequest.disapproved_reviewers.length === 0) {
                 if(pullRequest.approved_reviewers.length > 0) {
@@ -136,8 +162,12 @@ function renderRepositoryData(userData, repositoriesData) {
             pullRequestElement.appendChild(pullRequestCol4Element);
             pullRequestElement.appendChild(pullRequestCol5Element);
 
-            repositoryContentElement.appendChild(pullRequestElement);
+            pullRequestBlobElement.appendChild(pullRequestElement);
+
+            repositoryPullRequestsElement.appendChild(pullRequestBlobElement);
         }
+
+        repositoryContentElement.appendChild(repositoryPullRequestsElement);
 
         repositoryElement.appendChild(repositoryContentElement);
 
@@ -145,17 +175,18 @@ function renderRepositoryData(userData, repositoriesData) {
     }
 }
 
-function getRepositoryTitleElement(repository) {
+function getRepositoryTitleElement(repository, pullRequests) {
     var pullRequestTitleElement = document.createElement('span');
     pullRequestTitleElement.className = 'repository-title';
 
     var pullRequestTitleIconElement = document.createElement('i');
-    pullRequestTitleIconElement.className = 'fi-arrows-compress';
+    pullRequestTitleIconElement.className = 'fi-arrows-compress toggle-pull-requests';
+    pullRequestTitleIconElement.setAttribute('data-toggle-id', repository.id);
 
     var pullRequestTitleTextElement = document.createElement('a');
     pullRequestTitleTextElement.className = 'repository-title-text';
     pullRequestTitleTextElement.href = repository.url;
-    pullRequestTitleTextElement.innerHTML = repository.full_name;
+    pullRequestTitleTextElement.innerHTML = repository.full_name + ' - ' + (Object.keys(pullRequests).length) + ' PRs';
 
     pullRequestTitleElement.appendChild(pullRequestTitleIconElement);
     pullRequestTitleElement.appendChild(pullRequestTitleTextElement);
@@ -229,14 +260,10 @@ function getPullRequestCol2Element(pullRequest) {
     var createdDate = new Date(pullRequest.created_at);
 
     var pullRequestColElement = document.createElement('div');
-    pullRequestColElement.className = 'small-7 pull-request-column text-no-overflow';
-
-    var pullRequestTitleElement = document.createElement('a');
-    pullRequestTitleElement.className = 'pull-request-title';
-    pullRequestTitleElement.href = pullRequest.url;
-    pullRequestTitleElement.innerHTML = pullRequest.title;
+    pullRequestColElement.className = 'small-4 pull-request-column';
 
     var pullRequestFromBranchElement = document.createElement('div');
+    pullRequestFromBranchElement.className = 'text-no-overflow';
 
     var pullRequestFromBranchTitleElement = document.createElement('span');
     pullRequestFromBranchTitleElement.className = 'pull-request-branch-title';
@@ -250,6 +277,7 @@ function getPullRequestCol2Element(pullRequest) {
 
 
     var pullRequestToBranchElement = document.createElement('div');
+    pullRequestToBranchElement.className = 'text-no-overflow';
 
     var pullRequestToBranchTitleElement = document.createElement('span');
     pullRequestToBranchTitleElement.className = 'pull-request-branch-title';
@@ -265,7 +293,6 @@ function getPullRequestCol2Element(pullRequest) {
     var pullRequestInfoElement = document.createElement('div');
     pullRequestInfoElement.innerHTML = 'Created at ' + formatDate(createdDate) + ' by ' + pullRequest.created_by + ' - ' + pullRequest.changed_files + ' files';
 
-    pullRequestColElement.appendChild(pullRequestTitleElement);
     pullRequestColElement.appendChild(pullRequestFromBranchElement);
     pullRequestColElement.appendChild(pullRequestToBranchElement);
     pullRequestColElement.appendChild(pullRequestInfoElement);
@@ -301,7 +328,7 @@ function getPullRequestCol3Element(pullRequest, username, pullRequestElement) {
 
 function getPullRequestCol4Element(pullRequest, username, pullRequestElement) {
     var pullRequestColElement = document.createElement('div');
-    pullRequestColElement.className = 'small-2 pull-request-column';
+    pullRequestColElement.className = 'small-5 pull-request-column';
 
     for (var i = 0, reviewer; reviewer = pullRequest.disapproved_reviewers[i]; i++) {
         if (username === reviewer.username) {

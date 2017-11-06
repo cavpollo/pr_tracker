@@ -409,6 +409,7 @@ function getRepositories(randomId, authToken, params, response) {
             repositoriesData[fullName] === {}) {
 
             repoData = {
+                id: repository.id,
                 name: repository.name,
                 full_name: fullName,
                 url: repository.html_url,
