@@ -67,8 +67,14 @@ function renderRepositoryData() {
         var reposDoneLoading = true;
         var reposErrorLoading = false;
 
-        var renderedRepositories = false;
+        var repositoryKeysSorted = [];
         for (var repositoryKey in repositoriesData) {
+            repositoryKeysSorted.push(repositoryKey);
+        }
+        repositoryKeysSorted.sort();
+
+        var renderedRepositories = false;
+        for (var i = 0, repositoryKey; repositoryKey = repositoryKeysSorted[i]; i++) {
             var repository = repositoriesData[repositoryKey];
             var pullRequests = repository.pull_requests;
 
@@ -92,9 +98,17 @@ function renderRepositoryData() {
                 repositoryPullRequestsElement.className += ' hide-repository-content';
             }
 
-            var renderedPRs = false;
+            var pullRequestKeyDatesSorted = [];
             for (var pullRequestKey in pullRequests) {
-                var pullRequest = pullRequests[pullRequestKey];
+                pullRequestKeyDatesSorted.push({key: pullRequestKey, date: pullRequests[pullRequestKey].created_at});
+            }
+            pullRequestKeyDatesSorted.sort(function (a, b) {
+                return b.date.localeCompare(a.date);
+            });
+
+            var renderedPRs = false;
+            for (var j = 0, pullRequestKeyDate; pullRequestKeyDate = pullRequestKeyDatesSorted[j]; j++) {
+                var pullRequest = pullRequests[pullRequestKeyDate.key];
 
                 if (pullRequest.pr_status === 'OLD') {
                     continue;
@@ -219,8 +233,15 @@ function renderPullRequest(pullRequest, items, username) {
             render = true;
         }
 
-
         if (items['switch-user-rejected'] === true && userPresent(pullRequest.rejected_reviewers, username)) {
+            render = true;
+        }
+
+        if (items['switch-user-commented'] === true && userPresent(pullRequest.comment_reviewers, username)) {
+            render = true;
+        }
+
+        if (items['switch-user-pending-to-review'] === true && userPresent(pullRequest.pending_reviewers, username)) {
             render = true;
         }
 
@@ -229,10 +250,6 @@ function renderPullRequest(pullRequest, items, username) {
         }
 
         if (items['switch-user-dismissed'] === true && userPresent(pullRequest.dismissed_reviewers, username)) {
-            render = true;
-        }
-
-        if (items['switch-user-commented'] === true && userPresent(pullRequest.comment_reviewers, username)) {
             render = true;
         }
 
