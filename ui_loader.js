@@ -211,7 +211,7 @@ function renderPullRequest(pullRequest, items, username) {
             }
         }
 
-        if (items['switch-pr-dismissed'] === true && pullRequest.dismissed_reviewers.length > 0){
+        if (items['switch-pr-dismissed'] === true && pullRequest.dismissed_reviewers.length > 0) {
             render = true;
         }
 
@@ -221,11 +221,11 @@ function renderPullRequest(pullRequest, items, username) {
 
 
         if (items['switch-user-rejected'] === true && userPresent(pullRequest.rejected_reviewers, username)) {
-                render = true;
+            render = true;
         }
 
         if (items['switch-user-approved'] === true && userPresent(pullRequest.approved_reviewers, username)) {
-                render = true;
+            render = true;
         }
 
         if (items['switch-user-dismissed'] === true && userPresent(pullRequest.dismissed_reviewers, username)) {

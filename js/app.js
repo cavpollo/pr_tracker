@@ -27,7 +27,7 @@ $(document).ready(function () {
     });
 
     $('input.switch-input').click(function () {
-        if($(this).prop('checked') === false && $(this).attr('data-toggled-all') === true){
+        if ($(this).prop('checked') === false && $(this).attr('data-toggled-all') === true) {
             $('#switch-all').prop('checked', false)
         }
 
@@ -54,7 +54,6 @@ $(document).ready(function () {
             repositoryContentElement.addClass('hide-repository-content');
         }
     });
-
 
 
     $('input.switch-input').each(function () {
