@@ -1,13 +1,13 @@
 $(document).foundation();
 
-function getValue(name, callout) {
+function getValue(name, callout, params) {
     var defaults = {};
     defaults[name] = false;
 
     chrome.storage.sync.get(defaults,
         function (items) {
             if (callout) {
-                callout(items[name]);
+                callout(items[name], params);
             }
         });
 }
@@ -40,5 +40,21 @@ $(document).ready(function () {
             function (value) {
                 switchInput.prop('checked', value);
             });
+    });
+
+    $('.toggle-pull-requests').click(function () {
+        var toggle_id = $(this).attr('data-toggle-id');
+        var repositoryContentElement = $('#' + toggle_id);
+        if (repositoryContentElement.hasClass('hide-repository-content')) {
+            $(this).removeClass('fi-arrows-expand');
+            $(this).addClass('fi-arrows-compress');
+
+            repositoryContentElement.removeClass('hide-repository-content');
+        } else {
+            $(this).removeClass('fi-arrows-compress');
+            $(this).addClass('fi-arrows-expand');
+
+            repositoryContentElement.addClass('hide-repository-content');
+        }
     });
 });

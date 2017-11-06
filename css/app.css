@@ -1,5 +1,5 @@
 .repository {
-    background-color: #93bcff;
+    background-color: #c0c0c0;
     padding: 0px 10px 2px 8px;
     margin-bottom: 10px;
     border-radius: 8px;
@@ -15,12 +15,32 @@
     color: #000000;
 }
 
+.hide-repository-content {
+    display: none;
+}
+
 .pull-request {
     margin-bottom: 8px;
     background-color: #ffffff;
     border-radius: 4px;
     box-shadow: #0a0a0a 2px 2px 2px;
     padding-bottom: 2px;
+}
+
+.pull-request-title {
+    background-color: #2ba6cb;
+    border-radius: 4px 4px 0px 0px;
+    padding: 0px 2px 0px 2px;
+}
+
+.pull-request-title-link {
+    font-size: 18px;
+    color: #ffffff;
+}
+
+.pull-request-row {
+    margin-left: 0px !important;
+    margin-right: 0px !important;
 }
 
 .pull-request-column {
@@ -32,7 +52,7 @@
     position: relative;
     top: 50%;
     left: 50%;
-    transform: translate(-50%,-50%);
+    transform: translate(-50%, -50%);
 
     width: 48px;
     height: 48px;
@@ -47,13 +67,10 @@
     font-size: 24px;
     display: inline-block;
 }
+
 .pull-request-icon-status:hover {
     font-size: 32px;
     display: inline-block;
-}
-
-.pull-request-title {
-    font-size: 18px;
 }
 
 .text-no-overflow {
@@ -66,11 +83,10 @@
     font-weight: bold;
 }
 
-
 div.user-badge {
-    width: 36px;
-    height: 36px;
-    line-height: 28px;
+    width: 44px;
+    height: 44px;
+    line-height: 36px;
     display: inline-block;
     background-color: #444444;
     color: #ffffff;
@@ -80,11 +96,13 @@ div.user-badge {
     border-radius: 32px;
     margin: 2px 3px 3px 2px;
     box-shadow: #0a0a0a 2px 2px 2px;
+    font-weight: bold;
 }
 
 div.user-badge:hover {
-    width: 40px;
-    height: 40px;
+    width: 46px;
+    height: 46px;
+    background-color: #555555;
     border: 5px solid #000000;
     border-radius: 36px;
     margin: 1px 2px 2px 1px;
@@ -92,7 +110,7 @@ div.user-badge:hover {
 }
 
 a.user-badge {
-    display:inline-block;
+    display: inline-block;
     border: 4px solid;
     border-radius: 32px;
     margin: 2px 3px 3px 2px;
@@ -115,8 +133,8 @@ img.user-badge {
     width: 72px;
     min-height: 36px;
     display: inline-block;
-    vertical-align:middle;
-    text-align:center;
+    vertical-align: middle;
+    text-align: center;
     border-radius: 4px;
     padding: 8px;
     font-weight: bold;
