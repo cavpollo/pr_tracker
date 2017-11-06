@@ -12,11 +12,14 @@
 </head>
 <body>
 
-<h1>PR Tracker <a id="panel-toggler" data-toggle="panel"><i class="fi-filter"></i></a></h1>
+<div class="row">
+    <h1>PR Tracker <a id="panel-toggler" data-toggle="panel"><i class="fi-filter"></i></a></h1>
+</div>
 
-
-<div class="callout" id="panel" data-toggler data-animate="hinge-in-from-top hinge-out-from-top" style="display: none;">
-    <h4>Select your filters</h4>
+<div class="callout" id="panel" data-toggler data-animate="hinge-in-from-top hinge-out-from-top" style="display: none; background-color: #f7f7f7">
+    <div class="row">
+        <h4>Select your filters</h4>
+    </div>
     <div class="row">
         <div class="small-4 columns">
             Show all Pull Requests
@@ -29,10 +32,10 @@
             </div>
         </div>
         <div class="small-4 columns">
-            Show Repositories Toggled
+            Show All Repositories Expanded
             <div class="switch">
-                <input class="switch-input" id="switch-toggled" type="checkbox" name="switch-toggled">
-                <label class="switch-paddle" for="switch-toggled">
+                <input class="switch-input" id="switch-expanded" type="checkbox" name="switch-expanded">
+                <label class="switch-paddle" for="switch-expanded">
                     <span class="switch-active">Yes</span>
                     <span class="switch-inactive">No</span>
                 </label>
@@ -44,8 +47,7 @@
             <div>
                 Show pending to review by me
                 <div class="switch">
-                    <input class="switch-input" id="switch-user-pending-to-review" type="checkbox"
-                           name="switch-user-pending-to-review">
+                    <input class="switch-input" id="switch-user-pending-to-review" type="checkbox" name="switch-user-pending-to-review" data-toggled-all>
                     <label class="switch-paddle" for="switch-user-pending-to-review">
                         <span class="switch-active">Yes</span>
                         <span class="switch-inactive">No</span>
@@ -55,7 +57,7 @@
             <div>
                 Show PRs I approved
                 <div class="switch">
-                    <input class="switch-input" id="switch-user-approved" type="checkbox" name="switch-user-approved">
+                    <input class="switch-input" id="switch-user-approved" type="checkbox" name="switch-user-approved" data-toggled-all>
                     <label class="switch-paddle" for="switch-user-approved">
                         <span class="switch-active">Yes</span>
                         <span class="switch-inactive">No</span>
@@ -65,7 +67,7 @@
             <div>
                 Show PRs I rejected
                 <div class="switch">
-                    <input class="switch-input" id="switch-user-rejected" type="checkbox" name="switch-user-rejected">
+                    <input class="switch-input" id="switch-user-rejected" type="checkbox" name="switch-user-rejected" data-toggled-all>
                     <label class="switch-paddle" for="switch-user-rejected">
                         <span class="switch-active">Yes</span>
                         <span class="switch-inactive">No</span>
@@ -75,7 +77,7 @@
             <div>
                 Show PRs I commented on
                 <div class="switch">
-                    <input class="switch-input" id="switch-user-commented" type="checkbox" name="switch-user-commented">
+                    <input class="switch-input" id="switch-user-commented" type="checkbox" name="switch-user-commented" data-toggled-all>
                     <label class="switch-paddle" for="switch-user-commented">
                         <span class="switch-active">Yes</span>
                         <span class="switch-inactive">No</span>
@@ -87,7 +89,7 @@
             <div>
                 Show PRs I created
                 <div class="switch">
-                    <input class="switch-input" id="switch-user-creator" type="checkbox" name="switch-user-creator">
+                    <input class="switch-input" id="switch-user-creator" type="checkbox" name="switch-user-creator" data-toggled-all>
                     <label class="switch-paddle" for="switch-user-creator">
                         <span class="switch-active">Yes</span>
                         <span class="switch-inactive">No</span>
@@ -97,7 +99,7 @@
             <div>
                 Show PRs I'm assigned
                 <div class="switch">
-                    <input class="switch-input" id="switch-user-assigned" type="checkbox" name="switch-user-assigned">
+                    <input class="switch-input" id="switch-user-assigned" type="checkbox" name="switch-user-assigned" data-toggled-all>
                     <label class="switch-paddle" for="switch-user-assigned">
                         <span class="switch-active">Yes</span>
                         <span class="switch-inactive">No</span>
@@ -107,7 +109,7 @@
             <div>
                 Show PRs I'm dismissed
                 <div class="switch">
-                    <input class="switch-input" id="switch-user-dismissed" type="checkbox" name="switch-user-dismissed">
+                    <input class="switch-input" id="switch-user-dismissed" type="checkbox" name="switch-user-dismissed" data-toggled-all>
                     <label class="switch-paddle" for="switch-user-dismissed">
                         <span class="switch-active">Yes</span>
                         <span class="switch-inactive">No</span>
@@ -119,8 +121,8 @@
             <div>
                 Show PRs with at least one dismissed review
                 <div class="switch">
-                    <input class="switch-input" id="switch-pr-dissmissed" type="checkbox" name="switch-pr-dissmissed">
-                    <label class="switch-paddle" for="switch-pr-dissmissed">
+                    <input class="switch-input" id="switch-pr-dismissed" type="checkbox" name="switch-pr-dismissed" data-toggled-all>
+                    <label class="switch-paddle" for="switch-pr-dismissed">
                         <span class="switch-active">Yes</span>
                         <span class="switch-inactive">No</span>
                     </label>
@@ -129,7 +131,7 @@
             <div>
                 Show rejected PRs
                 <div class="switch">
-                    <input class="switch-input" id="switch-pr-rejected" type="checkbox" name="switch-pr-rejected">
+                    <input class="switch-input" id="switch-pr-rejected" type="checkbox" name="switch-pr-rejected" data-toggled-all>
                     <label class="switch-paddle" for="switch-pr-rejected">
                         <span class="switch-active">Yes</span>
                         <span class="switch-inactive">No</span>
@@ -139,8 +141,7 @@
             <div>
                 Show PRs with merge conflicts
                 <div class="switch">
-                    <input class="switch-input" id="switch-pr-merge-conflict" type="checkbox"
-                           name="switch-pr-merge-conflict">
+                    <input class="switch-input" id="switch-pr-merge-conflict" type="checkbox" name="switch-pr-merge-conflict" data-toggled-all>
                     <label class="switch-paddle" for="switch-pr-merge-conflict">
                         <span class="switch-active">Yes</span>
                         <span class="switch-inactive">No</span>
@@ -150,8 +151,7 @@
             <div>
                 Show Not Reviewed PRs
                 <div class="switch">
-                    <input class="switch-input" id="switch-pr-not-reviewed" type="checkbox"
-                           name="switch-pr-not-reviewed">
+                    <input class="switch-input" id="switch-pr-not-reviewed" type="checkbox" name="switch-pr-not-reviewed" data-toggled-all>
                     <label class="switch-paddle" for="switch-pr-not-reviewed">
                         <span class="switch-active">Yes</span>
                         <span class="switch-inactive">No</span>
@@ -161,7 +161,7 @@
             <div>
                 Show Approved PRs
                 <div class="switch">
-                    <input class="switch-input" id="switch-pr-approved" type="checkbox" name="switch-pr-approved">
+                    <input class="switch-input" id="switch-pr-approved" type="checkbox" name="switch-pr-approved" data-toggled-all>
                     <label class="switch-paddle" for="switch-pr-approved">
                         <span class="switch-active">Yes</span>
                         <span class="switch-inactive">No</span>
@@ -176,7 +176,9 @@
 </div>
 
 <div id="repositories">
-    =)
+    <div class="row">
+        <h3>No Data Has Loaded Yet.</h3>
+    </div>
 </div>
 
 <script src="js/vendor/jquery.js"></script>

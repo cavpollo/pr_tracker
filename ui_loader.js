@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    var backgroundPage = chrome.extension.getBackgroundPage();
-    renderRepositoryData(backgroundPage.userData, backgroundPage.repositoriesData);
+    renderRepositoryData();
 
     // document.getElementById('reload').onclick = function () {
     //     var backgroundPage = chrome.extension.getBackgroundPage();
@@ -22,7 +21,7 @@ function sortRepositoryData(repositoriesData) {
                 return a.username.localeCompare(b.username);
             });
 
-            pullRequest.disapproved_reviewers.sort(function (a, b) {
+            pullRequest.rejected_reviewers.sort(function (a, b) {
                 return a.username.localeCompare(b.username);
             });
 
@@ -45,159 +44,244 @@ function sortRepositoryData(repositoriesData) {
     }
 }
 
-function toggleRepositoryPullRequests (value, repositoryPullRequestsElement) {
-    if (value) {
-        repositoryPullRequestsElement.className += ' hide-repository-content';
-    }
-}
+function renderRepositoryData() {
+    chrome.storage.sync.get(null, function (items) {
+        var backgroundPage = chrome.extension.getBackgroundPage();
+        userData = backgroundPage.userData;
+        repositoriesData = backgroundPage.repositoriesData;
 
-function renderRepositoryData(userData, repositoriesData) {
-    sortRepositoryData(repositoriesData);
+        // console.log(userData);
+        console.log(repositoriesData);
+        // console.log(items);
 
-    console.log(userData);
+        sortRepositoryData(repositoriesData);
 
-    var username = userData['username'];
+        var username = userData['username'];
 
-    console.log(repositoriesData);
+        var repositoriesDiv = document.getElementById('repositories');
 
-    var repositoriesDiv = document.getElementById('repositories');
-
-    while (repositoriesDiv.firstChild) {
-        repositoriesDiv.removeChild(repositoriesDiv.firstChild);
-    }
-
-    for (var repositoryKey in repositoriesData) {
-        var repository = repositoriesData[repositoryKey];
-        var pullRequests = repository.pull_requests;
-
-        if (pullRequests === undefined || Object.keys(pullRequests).length === 0 || repository.status === 'OLD') {
-            continue;
+        while (repositoriesDiv.firstChild) {
+            repositoriesDiv.removeChild(repositoriesDiv.firstChild);
         }
 
-        var repositoryElement = document.createElement('div');
-        repositoryElement.className = 'repository row';
+        var reposDoneLoading = true;
+        var reposErrorLoading = false;
 
-        var repositoryContentElement = document.createElement('div');
-        repositoryContentElement.className = 'small-12';
+        var renderedRepositories = false;
+        for (var repositoryKey in repositoriesData) {
+            var repository = repositoriesData[repositoryKey];
+            var pullRequests = repository.pull_requests;
 
-        var repositoryPullRequestsElement = document.createElement('div');
-        repositoryPullRequestsElement.id = repository.id;
-        repositoryPullRequestsElement.className = 'pull-requests';
-
-        getValue('switch-toggled', toggleRepositoryPullRequests, repositoryPullRequestsElement);
-
-        var repositoryTitleElement = getRepositoryTitleElement(repository, pullRequests);
-        repositoryContentElement.appendChild(repositoryTitleElement);
-
-        for (var pullRequestKey in pullRequests) {
-            var pullRequest = pullRequests[pullRequestKey];
-
-            if (pullRequest.pr_status === 'OLD') {
+            if (pullRequests === undefined || Object.keys(pullRequests).length === 0 || repository.status === 'OLD') {
                 continue;
             }
 
-            var pullRequestBlobElement = document.createElement('div');
-            pullRequestBlobElement.className = 'pull-request';
+            var repositoryElement = document.createElement('div');
+            repositoryElement.className = 'repository row';
 
-            var pullRequestTitleElement = document.createElement('div');
-            pullRequestTitleElement.className = 'pull-request-title';
+            var repositoryContentElement = document.createElement('div');
+            repositoryContentElement.className = 'small-12';
 
-            var pullRequestTitleLinkElement = document.createElement('a');
-            pullRequestTitleLinkElement.className = 'pull-request-title-link';
-            pullRequestTitleLinkElement.href = pullRequest.url;
-            pullRequestTitleLinkElement.innerHTML = pullRequest.title;
-            pullRequestTitleElement.appendChild(pullRequestTitleLinkElement);
+            var repositoryTitleElement = getRepositoryTitleElement(repository, items);
+            repositoryContentElement.appendChild(repositoryTitleElement);
 
-            pullRequestBlobElement.appendChild(pullRequestTitleElement);
-
-            var prDoneLoading = true;
-            var prErrorLoading = false;
-
-            if (!(pullRequest.pr_status === 'LOADED' || pullRequest.pr_status === 'UNCHANGED') ||
-                pullRequest.reviews_status !== 'LOADED' ||
-                pullRequest.labels_status !== 'LOADED') {
-                prDoneLoading = false;
-                reposDoneLoading = false;
+            var repositoryPullRequestsElement = document.createElement('div');
+            repositoryPullRequestsElement.id = repository.id;
+            repositoryPullRequestsElement.className = 'pull-requests';
+            if (items['switch-expanded'] === false) {
+                repositoryPullRequestsElement.className += ' hide-repository-content';
             }
 
-            if (pullRequest.pr_status === 'ERROR' ||
-                pullRequest.reviews_status === 'ERROR' ||
-                pullRequest.labels_status === 'ERROR') {
-                prErrorLoading = true;
-                reposErrorLoading = true;
-            }
+            var renderedPRs = false;
+            for (var pullRequestKey in pullRequests) {
+                var pullRequest = pullRequests[pullRequestKey];
 
-            var pullRequestElement = document.createElement('div');
-            pullRequestElement.className = 'row pull-request-row';
-
-            if (pullRequest.disapproved_reviewers.length === 0) {
-                if(pullRequest.approved_reviewers.length > 0) {
-                    addFilterClass(pullRequestElement, 'pr-approved');
-                } else {
-                    addFilterClass(pullRequestElement, 'pr-not-reviewed');
+                if (pullRequest.pr_status === 'OLD') {
+                    continue;
                 }
-            } else {
-                addFilterClass(pullRequestElement, 'pr-rejected');
+
+                var prDoneLoading = true;
+                var prErrorLoading = false;
+
+                if (!(pullRequest.pr_status === 'LOADED' || pullRequest.pr_status === 'UNCHANGED') ||
+                    pullRequest.reviews_status !== 'LOADED' ||
+                    pullRequest.labels_status !== 'LOADED') {
+                    prDoneLoading = false;
+                    reposDoneLoading = false;
+                }
+
+                if (pullRequest.pr_status === 'ERROR' ||
+                    pullRequest.reviews_status === 'ERROR' ||
+                    pullRequest.labels_status === 'ERROR') {
+                    prErrorLoading = true;
+                    reposErrorLoading = true;
+                }
+
+                if (!renderPullRequest(pullRequest, items, username)) {
+                    continue;
+                }
+
+                renderedPRs = true;
+
+                var pullRequestBlobElement = document.createElement('div');
+                pullRequestBlobElement.className = 'pull-request';
+
+                var pullRequestTitleElement = document.createElement('div');
+                pullRequestTitleElement.className = 'pull-request-title';
+
+                var pullRequestTitleLinkElement = document.createElement('a');
+                pullRequestTitleLinkElement.className = 'pull-request-title-link';
+                pullRequestTitleLinkElement.href = pullRequest.url;
+                pullRequestTitleLinkElement.innerHTML = pullRequest.title;
+                pullRequestTitleElement.appendChild(pullRequestTitleLinkElement);
+
+                pullRequestBlobElement.appendChild(pullRequestTitleElement);
+
+                var pullRequestElement = document.createElement('div');
+                pullRequestElement.className = 'row pull-request-row';
+
+                var pullRequestCol1Element = getPullRequestCol1Element(pullRequest);
+                var pullRequestCol2Element = getPullRequestCol2Element(pullRequest);
+                var pullRequestCol3Element = getPullRequestCol3Element(pullRequest);
+                var pullRequestCol4Element = getPullRequestCol4Element(pullRequest);
+                var pullRequestCol5Element = getPullRequestCol5Element(pullRequest);
+
+                pullRequestElement.appendChild(pullRequestCol1Element);
+                pullRequestElement.appendChild(pullRequestCol2Element);
+                pullRequestElement.appendChild(pullRequestCol3Element);
+                pullRequestElement.appendChild(pullRequestCol4Element);
+                pullRequestElement.appendChild(pullRequestCol5Element);
+
+                pullRequestBlobElement.appendChild(pullRequestElement);
+
+                repositoryPullRequestsElement.appendChild(pullRequestBlobElement);
             }
 
-            if (pullRequest.mergeable !== null && pullRequest.mergeable === true) {
-                addFilterClass(pullRequestElement, 'pr-mergeable');
-            } else {
-                addFilterClass(pullRequestElement, 'pr-merge-conflict');
+            if (renderedPRs) {
+                repositoryContentElement.appendChild(repositoryPullRequestsElement);
+
+                repositoryElement.appendChild(repositoryContentElement);
+
+                repositoriesDiv.appendChild(repositoryElement);
+
+                renderedRepositories = true;
             }
-
-            if (username === pullRequest.created_by) {
-                addFilterClass(pullRequestElement, 'pr-user-creator');
-            }
-
-            var pullRequestCol1Element = getPullRequestCol1Element(pullRequest);
-            var pullRequestCol2Element = getPullRequestCol2Element(pullRequest);
-            var pullRequestCol3Element = getPullRequestCol3Element(pullRequest, username, repositoryElement);
-            var pullRequestCol4Element = getPullRequestCol4Element(pullRequest, username, repositoryElement);
-            var pullRequestCol5Element = getPullRequestCol5Element(pullRequest);
-
-            pullRequestElement.appendChild(pullRequestCol1Element);
-            pullRequestElement.appendChild(pullRequestCol2Element);
-            pullRequestElement.appendChild(pullRequestCol3Element);
-            pullRequestElement.appendChild(pullRequestCol4Element);
-            pullRequestElement.appendChild(pullRequestCol5Element);
-
-            pullRequestBlobElement.appendChild(pullRequestElement);
-
-            repositoryPullRequestsElement.appendChild(pullRequestBlobElement);
         }
 
-        repositoryContentElement.appendChild(repositoryPullRequestsElement);
+        if (!renderedRepositories) {
+            var noPullRequestsContainerTitleElement = document.createElement('div');
+            noPullRequestsContainerTitleElement.className = 'row';
 
-        repositoryElement.appendChild(repositoryContentElement);
+            var noPullRequestsTitleElement = document.createElement('h3');
+            noPullRequestsTitleElement.innerHTML = 'No Pull Requests Found.';
+            noPullRequestsContainerTitleElement.appendChild(noPullRequestsTitleElement);
 
-        repositoriesDiv.appendChild(repositoryElement);
-    }
+            repositoriesDiv.appendChild(noPullRequestsContainerTitleElement);
+
+            var noPullRequestsContainerTextElement = document.createElement('div');
+            noPullRequestsContainerTextElement.className = 'row';
+
+            var noPullRequestsTextElement = document.createElement('p');
+            noPullRequestsTextElement.innerHTML = 'Try redefining your filters. They may have not matched any record.';
+            noPullRequestsContainerTextElement.appendChild(noPullRequestsTextElement);
+
+            repositoriesDiv.appendChild(noPullRequestsContainerTextElement);
+        }
+    });
 }
 
-function getRepositoryTitleElement(repository, pullRequests) {
+function renderPullRequest(pullRequest, items, username) {
+    var render = false;
+    if (items['switch-all'] === true) {
+        render = true;
+    } else {
+        if (pullRequest.rejected_reviewers.length > 0) {
+            if (items['switch-pr-rejected'] === true) {
+                render = true;
+            }
+        } else {
+            if (pullRequest.approved_reviewers.length > 0) {
+                if (items['switch-pr-approved'] === true) {
+                    render = true;
+                }
+            } else {
+                if (items['switch-pr-not-reviewed'] === true) {
+                    render = true;
+                }
+            }
+        }
+
+        if (items['switch-pr-dismissed'] === true && pullRequest.dismissed_reviewers.length > 0){
+            render = true;
+        }
+
+        if (items['switch-pr-merge-conflict'] === true && pullRequest.mergeable !== null && pullRequest.mergeable === false) {
+            render = true;
+        }
+
+
+        if (items['switch-user-rejected'] === true && userPresent(pullRequest.rejected_reviewers, username)) {
+                render = true;
+        }
+
+        if (items['switch-user-approved'] === true && userPresent(pullRequest.approved_reviewers, username)) {
+                render = true;
+        }
+
+        if (items['switch-user-dismissed'] === true && userPresent(pullRequest.dismissed_reviewers, username)) {
+            render = true;
+        }
+
+        if (items['switch-user-commented'] === true && userPresent(pullRequest.comment_reviewers, username)) {
+            render = true;
+        }
+
+        if (items['switch-user-assigned'] === true && userPresent(pullRequest.assignees, username)) {
+            render = true;
+        }
+
+        if (items['switch-user-creator'] === true && pullRequest.created_by === username) {
+            render = true;
+        }
+    }
+
+    return render;
+}
+
+function userPresent(users, username) {
+    var found = false;
+    for (var i = 0, user; user = users[i]; i++) {
+        if (username === user.username) {
+            found = true;
+            break;
+        }
+    }
+
+    return found;
+}
+
+function getRepositoryTitleElement(repository, items) {
     var pullRequestTitleElement = document.createElement('span');
     pullRequestTitleElement.className = 'repository-title';
 
     var pullRequestTitleIconElement = document.createElement('i');
-    pullRequestTitleIconElement.className = 'fi-arrows-compress toggle-pull-requests';
+    pullRequestTitleIconElement.className = 'toggle-pull-requests';
+    if (items['switch-expanded'] === true) {
+        pullRequestTitleIconElement.className += ' fi-arrows-compress';
+    } else {
+        pullRequestTitleIconElement.className += ' fi-arrows-expand';
+    }
     pullRequestTitleIconElement.setAttribute('data-toggle-id', repository.id);
 
     var pullRequestTitleTextElement = document.createElement('a');
     pullRequestTitleTextElement.className = 'repository-title-text';
     pullRequestTitleTextElement.href = repository.url;
-    pullRequestTitleTextElement.innerHTML = repository.full_name + ' - ' + (Object.keys(pullRequests).length) + ' PRs';
+    pullRequestTitleTextElement.innerHTML = repository.full_name; // + ' - ' + (Object.keys(pullRequests).length) + ' PRs';
 
     pullRequestTitleElement.appendChild(pullRequestTitleIconElement);
     pullRequestTitleElement.appendChild(pullRequestTitleTextElement);
 
     return pullRequestTitleElement;
-}
-
-function addFilterClass(repositoryElement, filterClass) {
-    if (repositoryElement.className.indexOf(filterClass) === -1) {
-        repositoryElement.className += ' ' + filterClass;
-    }
 }
 
 function getPullRequestCol1Element(pullRequest) {
@@ -212,7 +296,7 @@ function getPullRequestCol1Element(pullRequest) {
 
     var statusText = '?';
     if (pullRequest.pr_status === 'LOADED' || pullRequest.pr_status === 'UNCHANGED') {
-        if (pullRequest.disapproved_reviewers.length === 0) {
+        if (pullRequest.rejected_reviewers.length === 0) {
             if (pullRequest.approved_reviewers.length > 0) {
                 if (pullRequest.mergeable !== null && pullRequest.mergeable === true) {
                     statusText = 'ALL GOOD';
@@ -299,7 +383,7 @@ function getPullRequestCol2Element(pullRequest) {
     return pullRequestColElement;
 }
 
-function getPullRequestCol3Element(pullRequest, username, pullRequestElement) {
+function getPullRequestCol3Element(pullRequest) {
     var pullRequestColElement = document.createElement('div');
     pullRequestColElement.className = 'small-1 pull-request-column';
 
@@ -313,10 +397,6 @@ function getPullRequestCol3Element(pullRequest, username, pullRequestElement) {
         pullRequestColElement.appendChild(noAssigneeElement);
     } else {
         for (var i = 0, assignee; assignee = pullRequest.assignees[i]; i++) {
-            if (username === assignee.username) {
-                addFilterClass(pullRequestElement, 'pr-user-assigned');
-            }
-
             var assigneeLinkElement = getUserBadge(assignee, 'ASSIGNED', '#2ba6cb');
 
             pullRequestColElement.appendChild(assigneeLinkElement);
@@ -326,15 +406,11 @@ function getPullRequestCol3Element(pullRequest, username, pullRequestElement) {
     return pullRequestColElement;
 }
 
-function getPullRequestCol4Element(pullRequest, username, pullRequestElement) {
+function getPullRequestCol4Element(pullRequest) {
     var pullRequestColElement = document.createElement('div');
     pullRequestColElement.className = 'small-5 pull-request-column';
 
-    for (var i = 0, reviewer; reviewer = pullRequest.disapproved_reviewers[i]; i++) {
-        if (username === reviewer.username) {
-            addFilterClass(pullRequestElement, 'pr-user-rejected');
-        }
-
+    for (var i = 0, reviewer; reviewer = pullRequest.rejected_reviewers[i]; i++) {
         var assigneeLinkElement = getUserBadge(reviewer, 'REJECTED', '#b40900');
 
         pullRequestColElement.appendChild(assigneeLinkElement);
@@ -353,40 +429,24 @@ function getPullRequestCol4Element(pullRequest, username, pullRequestElement) {
             continue;
         }
 
-        if (username === reviewer.username) {
-            addFilterClass(pullRequestElement, 'pr-user-commented');
-        }
-
         var assigneeLinkElement = getUserBadge(reviewer, 'COMMENT', '#a8a8a8');
 
         pullRequestColElement.appendChild(assigneeLinkElement);
     }
 
     for (var i = 0, reviewer; reviewer = pullRequest.pending_reviewers[i]; i++) {
-        if (username === reviewer.username) {
-            addFilterClass(pullRequestElement, 'pr-user-pending-to-review');
-        }
-
         var assigneeLinkElement = getUserBadge(reviewer, 'INVITED', '#ddde00');
 
         pullRequestColElement.appendChild(assigneeLinkElement);
     }
 
     for (var i = 0, reviewer; reviewer = pullRequest.approved_reviewers[i]; i++) {
-        if (username === reviewer.username) {
-            addFilterClass(pullRequestElement, 'pr-user-approved');
-        }
-
         var assigneeLinkElement = getUserBadge(reviewer, 'APPROVED', '#00ae11');
 
         pullRequestColElement.appendChild(assigneeLinkElement);
     }
 
     for (var i = 0, reviewer; reviewer = pullRequest.dismissed_reviewers[i]; i++) {
-        if (username === reviewer.username) {
-            addFilterClass(pullRequestElement, 'pr-user-dismissed');
-        }
-
         var assigneeLinkElement = getUserBadge(reviewer, 'DISMISSED', '#55007f');
 
         pullRequestColElement.appendChild(assigneeLinkElement);
@@ -517,8 +577,8 @@ function renderRepositoryDataOld(userData, repositoriesData) {
             var isMine = false;
             var interacted = false;
 
-            var approved = pullRequest.disapproved_reviewers.length === 0 && pullRequest.approved_reviewers.length > 0;
-            var noApprovals = pullRequest.disapproved_reviewers.length === 0 && pullRequest.approved_reviewers.length === 0;
+            var approved = pullRequest.rejected_reviewers.length === 0 && pullRequest.approved_reviewers.length > 0;
+            var noApprovals = pullRequest.rejected_reviewers.length === 0 && pullRequest.approved_reviewers.length === 0;
             var canBeMerged = pullRequest.mergeable !== null && pullRequest.mergeable === true;
             var statusText = approved ? (canBeMerged ? 'ALL GOOD' : 'CONFLICTS MUST BE FIXED') : (noApprovals ? 'APPROVAL REQUIRED' : 'CHANGES REQUESTED');
             var createdDate = new Date(pullRequest.created_at);
@@ -569,7 +629,7 @@ function renderRepositoryDataOld(userData, repositoriesData) {
             pullRequestHTML += '<td style="vertical-align: bottom;">\n';
 
 
-            for (var i = 0, reviewer; reviewer = pullRequest.disapproved_reviewers[i]; i++) {
+            for (var i = 0, reviewer; reviewer = pullRequest.rejected_reviewers[i]; i++) {
                 if (username === reviewer.username) {
                     interacted = true;
                 }

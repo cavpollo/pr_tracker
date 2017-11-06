@@ -126,7 +126,7 @@ function updateIcon() {
                         pullRequest.labels_status === LOADED) {
 
                         var isMine = false;
-                        var rejected = pullRequest.disapproved_reviewers.length > 0;
+                        var rejected = pullRequest.rejected_reviewers.length > 0;
                         var mergeConflict = pullRequest.mergeable !== null && pullRequest.mergeable === false;
                         var invitedToReview = false;
 
@@ -495,7 +495,7 @@ function getRepositoryPullRequests(randomId, authToken, params, response) {
                 base_name: pullRequest.base.ref,
                 labels: [],
                 pending_reviewers: pendingReviewers,
-                disapproved_reviewers: [],
+                rejected_reviewers: [],
                 approved_reviewers: [],
                 comment_reviewers: [],
                 dismissed_reviewers: [],
@@ -616,7 +616,7 @@ function getPullRequestReviews(randomId, authToken, params, response) {
     }
 
     var approvedReviewers = [];
-    var disapprovedReviewers = [];
+    var rejectedReviewers = [];
     var commentReviewers = [];
     var dismissedReviewers = [];
     Object.keys(latestUniqueReviewers).forEach(function (key) {
@@ -626,7 +626,7 @@ function getPullRequestReviews(randomId, authToken, params, response) {
             approvedReviewers.push(reviewerData);
         } else {
             if (reviewerData.status === 'CHANGES_REQUESTED') {
-                disapprovedReviewers.push(reviewerData);
+                rejectedReviewers.push(reviewerData);
             } else {
                 if (reviewerData.status === 'COMMENTED') {
                     commentReviewers.push(reviewerData);
@@ -642,7 +642,7 @@ function getPullRequestReviews(randomId, authToken, params, response) {
     });
 
     pullRequestData.approved_reviewers = approvedReviewers;
-    pullRequestData.disapproved_reviewers = disapprovedReviewers;
+    pullRequestData.rejected_reviewers = rejectedReviewers;
     pullRequestData.comment_reviewers = commentReviewers;
     pullRequestData.dismissed_reviewers = dismissedReviewers;
     pullRequestData.reviews_status = LOADED;

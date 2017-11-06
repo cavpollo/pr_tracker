@@ -20,11 +20,11 @@
 }
 
 .pull-request {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     background-color: #ffffff;
     border-radius: 4px;
     box-shadow: #0a0a0a 2px 2px 2px;
-    padding-bottom: 2px;
+    padding-bottom: 4px;
 }
 
 .pull-request-title {
