@@ -7,11 +7,55 @@
     text-align: center;
 }
 
+#refresh-button {
+    background-color: gray;
+    margin-bottom: 6px;
+    margin-right: 4px;
+    font-size: 32px;
+    padding: 4px 10px 4px 10px;
+}
+
+.button-refreshing i {
+    animation: rotate 1.5s;
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 .repository {
     background-color: #c0c0c0;
     padding: 0px 10px 2px 8px;
     margin-bottom: 10px;
     border-radius: 8px;
+}
+
+.repository-refreshing {
+    animation: fadein 1.5s;
+}
+
+.repository-refreshing i {
+    animation: rotate 1.5s;
+}
+
+@keyframes fadein {
+    0% {
+        opacity: 1;
+    }
+    25% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
 }
 
 .repository-title {

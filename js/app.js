@@ -1,5 +1,9 @@
 $(document).foundation();
 
+var renderTimeoutInSeconds = 30;
+
+var renderLoopTimeoutId;
+
 function getValue(name, callout, params) {
     var defaults = {};
     defaults[name] = true;
@@ -17,11 +21,36 @@ function storeValues(values) {
         function () {
             console.debug('config saved');
 
-            renderRepositoryData();
+            clearTimeout(renderLoopTimeoutId);
+            renderLoop();
         });
 }
 
+function renderLoop() {
+    var button = $('#refresh-button');
+    var repositories = $('#repositories');
+
+    button.addClass('button-refreshing');
+    repositories.addClass('repository-refreshing');
+
+    renderRepositoryData();
+
+    setTimeout(function() {
+        button.removeClass('button-refreshing');
+        repositories.removeClass('repository-refreshing');
+    }, 1500);
+
+    renderLoopTimeoutId = setTimeout(function () {
+        renderLoop();
+    }, renderTimeoutInSeconds * 1000);
+}
+
 $(document).ready(function () {
+    $('#refresh-button').click(function () {
+        clearTimeout(renderLoopTimeoutId);
+        renderLoop();
+    });
+
     $('#switch-all').click(function () {
         $('#panel input[data-toggled-all][type="checkbox"]').prop('checked', this.checked);
     });
@@ -63,4 +92,6 @@ $(document).ready(function () {
                 switchInput.prop('checked', value);
             });
     });
+
+    renderLoop();
 });
