@@ -15,15 +15,12 @@
     padding: 4px 10px 4px 10px;
 }
 
-.button-refreshing i {
-    animation: rotate 1.5s;
+i.button-refreshing {
+    animation: rotate 1.125s;
 }
 
 @keyframes rotate {
     0% {
-        transform: rotate(0deg);
-    }
-    25% {
         transform: rotate(0deg);
     }
     100% {
@@ -40,10 +37,6 @@
 
 .repository-refreshing {
     animation: fadein 1.5s;
-}
-
-.repository-refreshing i {
-    animation: rotate 1.5s;
 }
 
 @keyframes fadein {

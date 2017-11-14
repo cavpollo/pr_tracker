@@ -1,9 +1,10 @@
 var requestTimeoutSeconds = 1000 * 2;
-var refreshPeriodMinutes = 4;
+var refreshPeriodMinutes = 3;
 var watchdogPeriodMinutes = 7;
 var maxRequestsPerSecond = 20;
 var userData = {};
 var repositoriesData = {};
+var dataTS = Date.now();
 var globalError = false;
 var apiTimeoutSeconds = 1;
 var apiTimeoutRandomSeconds = 10;
@@ -95,9 +96,9 @@ function updateIcon() {
             for (var pullRequestKey in repository.pull_requests) {
                 var pullRequest = repository.pull_requests[pullRequestKey];
 
-                if (!(pullRequest.pr_status === LOADED || pullRequest.pr_status === UNCHANGED) ||
-                    pullRequest.reviews_status !== LOADED ||
-                    pullRequest.labels_status !== LOADED) {
+                if (pullRequest.pr_status === LOADING || pullRequest.pr_status === ERROR ||
+                    pullRequest.reviews_status === LOADING || pullRequest.reviews_status === ERROR ||
+                    pullRequest.labels_status === LOADING || pullRequest.labels_status === ERROR) {
                     doneLoading = false;
                     break;
                 }
@@ -316,7 +317,7 @@ function loadData() {
             chrome.alarms.clear('refresh', function (wasCleared) {
                 chrome.alarms.create('refresh', {periodInMinutes: refreshPeriodMinutes});
             });
-            
+
             var randomId = setNewRandom();
             startApiTime = new Date();
             apiCount = 0;
@@ -440,6 +441,8 @@ function getRepositoriesError(randomId, params) {
     if (randomId === currentRandomId) {
         globalError = true;
 
+        dataTS = Date.now();
+
         updateIcon();
     }
 }
@@ -516,6 +519,8 @@ function getRepositoryPullRequests(randomId, authToken, params, response) {
 
             repoData.pull_requests[pullRequestKey] = pullRequestData;
 
+            dataTS = Date.now();
+
             updateIcon();
 
             asyncGetWithTimeout('Pull Request ' + repositoryFullName,
@@ -533,7 +538,7 @@ function getRepositoryPullRequests(randomId, authToken, params, response) {
 
             // TODO: Count how many comments are left unanswered by the assignee
         } else {
-            console.debug(repositoryFullName + ': ' + pullRequest.number + ' UNCHANGED');
+            // console.debug(repositoryFullName + ': ' + pullRequest.number + ' UNCHANGED');
 
             existingPullRequest.pr_status = UNCHANGED;
         }
@@ -547,6 +552,8 @@ function getRepositoryPullRequests(randomId, authToken, params, response) {
 function getRepositoryPullRequestsError(randomId, params) {
     if (randomId === currentRandomId) {
         globalError = true;
+
+        dataTS = Date.now();
 
         updateIcon();
     }
@@ -567,6 +574,8 @@ function getPullRequest(randomId, authToken, params, response) {
     pullRequestData.changed_files = response.changed_files;
     pullRequestData.mergeable = response.mergeable;
     pullRequestData.pr_status = LOADED;
+
+    dataTS = Date.now();
 
     updateIcon();
 
@@ -589,6 +598,8 @@ function getPullRequestError(randomId, params) {
         var pullRequestData = params.pullRequestData;
         pullRequestData.pr_status = ERROR;
 
+        dataTS = Date.now();
+
         updateIcon();
     }
 }
@@ -605,13 +616,21 @@ function getPullRequestReviews(randomId, authToken, params, response) {
     for (var j = 0, reviewer; reviewer = response[j]; j++) {
         var userId = reviewer.user.id;
 
+        var status = reviewer.state;
+        if (latestUniqueReviewers[userId] !== undefined &&
+            statusPrecedence(latestUniqueReviewers[userId].status, reviewer.state) === false) {
+            status = latestUniqueReviewers[userId].status;
+        }
+
         latestUniqueReviewers[userId] = {
             id: reviewer.id,
-            status: reviewer.state,
+            status: status,
             userId: userId,
             username: reviewer.user.login,
             avatar_url: reviewer.user.avatar_url,
-            url: reviewer.user.html_url
+            url: reviewer.user.html_url,
+            commit_id: reviewer.commit_id,
+            updated_at: reviewer.submitted_at
         };
     }
 
@@ -647,6 +666,8 @@ function getPullRequestReviews(randomId, authToken, params, response) {
     pullRequestData.dismissed_reviewers = dismissedReviewers;
     pullRequestData.reviews_status = LOADED;
 
+    dataTS = Date.now();
+
     updateIcon();
 
     asyncGetWithTimeout('Labels ' + repositoryFullName,
@@ -668,6 +689,8 @@ function getPullRequestReviewsError(randomId, params) {
         var pullRequestData = params.pullRequestData;
         pullRequestData.reviews_status = ERROR;
 
+        dataTS = Date.now();
+
         updateIcon();
     }
 }
@@ -677,8 +700,9 @@ function getPullRequestLabels(randomId, authToken, params, response) {
     // var pullRequestNumber = params.pullRequestNumber;
     var pullRequestData = params.pullRequestData;
 
+
     // console.log(repositoryFullName + '/' + pullRequestNumber + '/labels:');
-    // console.log(labelsData);
+    // console.log(response.labels);
 
     var labels = [];
     for (var j = 0, label; label = response.labels[j]; j++) {
@@ -694,6 +718,8 @@ function getPullRequestLabels(randomId, authToken, params, response) {
     pullRequestData.labels = labels;
     pullRequestData.labels_status = LOADED;
 
+    dataTS = Date.now();
+
     updateIcon();
 }
 
@@ -702,8 +728,23 @@ function getPullRequestLabelsError(randomId, params) {
         var pullRequestData = params.pullRequestData;
         pullRequestData.labels_status = ERROR;
 
+        dataTS = Date.now();
+
         updateIcon();
     }
+}
+
+
+function statusPrecedence(before, after) {
+    if (before === 'COMMENTED') {
+        return true;
+    } else {
+        if (after !== 'COMMENTED') {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 

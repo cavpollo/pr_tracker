@@ -1,8 +1,12 @@
 $(document).foundation();
 
-var renderTimeoutInSeconds = 30;
+var animationTimeInMilliseconds = 1500;
+var redrawInSeconds = 5;
+var redrawTimeoutId;
 
-var renderLoopTimeoutId;
+var lastDataRenderTS;
+var forceUIRedraw = false;
+var gettingRepositoryData = false;
 
 function getValue(name, callout, params) {
     var defaults = {};
@@ -21,33 +25,68 @@ function storeValues(values) {
         function () {
             console.debug('config saved');
 
-            clearTimeout(renderLoopTimeoutId);
+            clearTimeout(redrawTimeoutId);
             renderLoop();
         });
 }
 
 function renderLoop() {
-    var button = $('#refresh-button');
-    var repositories = $('#repositories');
+    if (gettingRepositoryData === false) {
+        gettingRepositoryData = true;
+        getRepositoryData(renderRepositories);
+    }
+}
 
-    button.addClass('button-refreshing');
-    repositories.addClass('repository-refreshing');
+function renderRepositories(repositoryDivElement, dataTS, doneLoading, anyError) {
+    if (forceUIRedraw || lastDataRenderTS === undefined || lastDataRenderTS !== dataTS) {
+        lastDataRenderTS = dataTS;
+        forceUIRedraw = false;
 
-    renderRepositoryData();
+        $('#repositories').addClass('repository-refreshing');
 
-    setTimeout(function() {
-        button.removeClass('button-refreshing');
-        repositories.removeClass('repository-refreshing');
-    }, 1500);
+        var button = $('#refresh-button');
+        button.addClass('button-refreshing');
+        if (doneLoading) {
+            button.css('backgroundColor', '#3ab400');
+        } else {
+            if (anyError) {
+                button.css('backgroundColor', '#b40004');
+            } else {
+                button.css('backgroundColor', '#b2b400');
+            }
+        }
 
-    renderLoopTimeoutId = setTimeout(function () {
+        setTimeout(function () {
+            var repositoriesElement = document.getElementById('repositories');
+
+            while (repositoriesElement.firstChild) {
+                repositoriesElement.removeChild(repositoriesElement.firstChild);
+            }
+
+            while (repositoryDivElement.hasChildNodes()) {
+                repositoriesElement.appendChild(repositoryDivElement.removeChild(repositoryDivElement.firstChild))
+            }
+
+            $('#repositories i').addClass('button-refreshing');
+        }, animationTimeInMilliseconds / 4);
+
+        setTimeout(function () {
+            $('#repositories').removeClass('repository-refreshing');
+            $('#repositories i').removeClass('button-refreshing');
+        }, animationTimeInMilliseconds);
+    }
+
+    gettingRepositoryData = false;
+
+    redrawTimeoutId = setTimeout(function () {
         renderLoop();
-    }, renderTimeoutInSeconds * 1000);
+    }, redrawInSeconds * 1000);
 }
 
 $(document).ready(function () {
     $('#refresh-button').click(function () {
-        clearTimeout(renderLoopTimeoutId);
+        forceUIRedraw = true;
+        clearTimeout(redrawTimeoutId);
         renderLoop();
     });
 

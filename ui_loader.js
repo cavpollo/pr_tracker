@@ -35,25 +35,27 @@ function sortRepositoryData(repositoriesData) {
     }
 }
 
-function renderRepositoryData() {
+function getRepositoryData(callback) {
     chrome.storage.sync.get(null, function (items) {
         var backgroundPage = chrome.extension.getBackgroundPage();
-        userData = backgroundPage.userData;
-        repositoriesData = backgroundPage.repositoriesData;
+        var userData = backgroundPage.userData;
+        var repositoriesData = backgroundPage.repositoriesData;
+        var dataTS = backgroundPage.dataTS;
 
         // console.log(userData);
-        console.log(repositoriesData);
+        // console.log(repositoriesData);
         // console.log(items);
+        // for (var repositoryKey in repositoriesData) {
+        //     if(repositoriesData[repositoryKey].status !== 'LOADED'){
+        //         console.log(repositoriesData[repositoryKey].name + ': ' + repositoriesData[repositoryKey].status);
+        //     }
+        // }
 
         sortRepositoryData(repositoriesData);
 
         var username = userData['username'];
 
-        var repositoriesDiv = document.getElementById('repositories');
-
-        while (repositoriesDiv.firstChild) {
-            repositoriesDiv.removeChild(repositoriesDiv.firstChild);
-        }
+        var repositoriesDiv = document.createElement('div');
 
         var repositoryKeysSorted = [];
         for (var repositoryKey in repositoriesData) {
@@ -175,9 +177,9 @@ function renderRepositoryData() {
             for (var pullRequestKey in pullRequests) {
                 var pullRequest = pullRequests[pullRequestKey];
 
-                if (!(pullRequest.pr_status === 'LOADED' || pullRequest.pr_status === 'UNCHANGED') ||
-                    pullRequest.reviews_status !== 'LOADED' ||
-                    pullRequest.labels_status !== 'LOADED') {
+                if (pullRequest.pr_status === 'LOADING' || pullRequest.pr_status === 'ERROR' ||
+                    pullRequest.reviews_status === 'LOADING' || pullRequest.reviews_status === 'ERROR' ||
+                    pullRequest.labels_status === 'LOADING' || pullRequest.labels_status === 'ERROR') {
                     reposDoneLoading = false;
                 }
 
@@ -189,25 +191,16 @@ function renderRepositoryData() {
             }
         }
 
-        if (reposDoneLoading) {
-            // "DONE LOADING"
-            $('#refresh-button').css('backgroundColor', '#3ab400');
-        } else {
-            if (reposErrorLoading) {
-                // "ERROR LOADING"
-                $('#refresh-button').css('backgroundColor', '#b40004');
-            } else {
-                // "LOADING"
-                $('#refresh-button').css('backgroundColor', '#b2b400');
-            }
-        }
-
-        if (!renderedRepositories) {
+        if (!repositoriesDiv) {
             var noPullRequestsContainerTitleElement = document.createElement('div');
             noPullRequestsContainerTitleElement.className = 'row';
 
             var noPullRequestsTitleElement = document.createElement('h3');
-            noPullRequestsTitleElement.innerHTML = 'No Pull Requests Found.';
+            if (reposDoneLoading) {
+                noPullRequestsTitleElement.innerHTML = 'No Pull Requests found.';
+            } else {
+                noPullRequestsTitleElement.innerHTML = 'Pull Requests are being loaded.';
+            }
             noPullRequestsContainerTitleElement.appendChild(noPullRequestsTitleElement);
 
             repositoriesDiv.appendChild(noPullRequestsContainerTitleElement);
@@ -216,11 +209,17 @@ function renderRepositoryData() {
             noPullRequestsContainerTextElement.className = 'row';
 
             var noPullRequestsTextElement = document.createElement('p');
-            noPullRequestsTextElement.innerHTML = 'Try redefining your filters. They may have not matched any record.';
+            if (reposDoneLoading) {
+                noPullRequestsTextElement.innerHTML = 'Try redefining your filters. They may have not matched any record.';
+            } else {
+                noPullRequestsTextElement.innerHTML = 'The Pull Request information is being loaded. Please wait.';
+            }
             noPullRequestsContainerTextElement.appendChild(noPullRequestsTextElement);
 
             repositoriesDiv.appendChild(noPullRequestsContainerTextElement);
         }
+
+        callback(repositoriesDiv, dataTS, reposDoneLoading, reposErrorLoading);
     });
 }
 
@@ -493,6 +492,8 @@ function getPullRequestCol4Element(pullRequest) {
 }
 
 function getUserBadge(user, statusText, color) {
+    var updated_at = new Date(user.updated_at);
+
     var userLinkElement = document.createElement('a');
     userLinkElement.className = 'user-badge';
     userLinkElement.href = user.url;
@@ -502,8 +503,8 @@ function getUserBadge(user, statusText, color) {
     var assigneeBadgeElement = document.createElement('img');
     assigneeBadgeElement.className = 'user-badge';
     assigneeBadgeElement.src = user.avatar_url;
-    assigneeBadgeElement.title = user.username + ' - ' + statusText;
-    assigneeBadgeElement.alt = user.username + ' - ' + statusText;
+    assigneeBadgeElement.title = user.username + ' - ' + statusText + ' - ' + formatDateTime(updated_at);
+    assigneeBadgeElement.alt = user.username + ' - ' + statusText + ' - ' + formatDateTime(updated_at);
 
     userLinkElement.appendChild(assigneeBadgeElement);
 
@@ -551,4 +552,11 @@ function formatDate(date) {
     var year = date.getFullYear();
 
     return day + ' ' + monthNames[monthIndex] + ' ' + year;
+}
+
+function formatDateTime(date) {
+    var hours = date.getHours();
+    var minutes = date.getMinutes();
+
+    return formatDate(date) + ' ' + hours + ':' + minutes + ' UTC';
 }
