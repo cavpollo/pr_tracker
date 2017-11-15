@@ -175,6 +175,10 @@ img.user-badge {
     border-radius: 32px;
 }
 
+img.pending-review {
+    filter: grayscale(100%) brightness(66%);
+}
+
 .pr-label {
     width: 72px;
     min-height: 36px;

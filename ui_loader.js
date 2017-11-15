@@ -506,6 +506,10 @@ function getUserBadge(user, statusText, color) {
     assigneeBadgeElement.title = user.username + ' - ' + statusText + updated_at;
     assigneeBadgeElement.alt = user.username + ' - ' + statusText + updated_at;
 
+    if (statusText === 'INVITED') {
+        assigneeBadgeElement.className += ' pending-review';
+    }
+
     userLinkElement.appendChild(assigneeBadgeElement);
 
     return userLinkElement;
