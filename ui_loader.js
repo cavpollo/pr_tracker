@@ -492,7 +492,7 @@ function getPullRequestCol4Element(pullRequest) {
 }
 
 function getUserBadge(user, statusText, color) {
-    var updated_at = new Date(user.updated_at);
+    var updated_at = user.updated_at === undefined ? '' : ' - ' + formatDateTime(new Date(user.updated_at));
 
     var userLinkElement = document.createElement('a');
     userLinkElement.className = 'user-badge';
@@ -503,8 +503,8 @@ function getUserBadge(user, statusText, color) {
     var assigneeBadgeElement = document.createElement('img');
     assigneeBadgeElement.className = 'user-badge';
     assigneeBadgeElement.src = user.avatar_url;
-    assigneeBadgeElement.title = user.username + ' - ' + statusText + ' - ' + formatDateTime(updated_at);
-    assigneeBadgeElement.alt = user.username + ' - ' + statusText + ' - ' + formatDateTime(updated_at);
+    assigneeBadgeElement.title = user.username + ' - ' + statusText + updated_at;
+    assigneeBadgeElement.alt = user.username + ' - ' + statusText + updated_at;
 
     userLinkElement.appendChild(assigneeBadgeElement);
 
