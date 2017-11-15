@@ -191,3 +191,7 @@ img.pending-review {
     margin: 2px 4px 4px 2px;
     box-shadow: #0a0a0a 2px 2px 2px;
 }
+
+.toggle-pull-requests {
+    user-select: none;
+}

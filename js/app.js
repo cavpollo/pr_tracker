@@ -107,7 +107,8 @@ $(document).ready(function () {
         storeValues(nameValues);
     });
 
-    $('.toggle-pull-requests').click(function () {
+    $('#repositories').on('click', '.toggle-pull-requests', function () {
+        console.log('ASDF')
         var toggle_id = $(this).attr('data-toggle-id');
         var repositoryContentElement = $('#' + toggle_id);
         if (repositoryContentElement.hasClass('hide-repository-content')) {
