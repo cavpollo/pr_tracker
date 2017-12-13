@@ -22,23 +22,44 @@
     </div>
     <div class="row">
         <div class="small-4 columns">
-            Show all Pull Requests
-            <div class="switch">
-                <input class="switch-input" id="switch-all" type="checkbox" name="switch-all" data-toggle-all>
-                <label class="switch-paddle" for="switch-all">
-                    <span class="switch-active">Yes</span>
-                    <span class="switch-inactive">No</span>
-                </label>
+            <div>
+                Show all Pull Requests
+                <div class="switch">
+                    <input class="switch-input" id="switch-all" type="checkbox" name="switch-all" data-toggle-all>
+                    <label class="switch-paddle" for="switch-all">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                Show All Repositories Expanded
+                <div class="switch">
+                    <input class="switch-input" id="switch-expanded" type="checkbox" name="switch-expanded">
+                    <label class="switch-paddle" for="switch-expanded">
+                        <span class="switch-active">Yes</span>
+                        <span class="switch-inactive">No</span>
+                    </label>
+                </div>
             </div>
         </div>
         <div class="small-4 columns">
-            Show All Repositories Expanded
-            <div class="switch">
-                <input class="switch-input" id="switch-expanded" type="checkbox" name="switch-expanded">
-                <label class="switch-paddle" for="switch-expanded">
-                    <span class="switch-active">Yes</span>
-                    <span class="switch-inactive">No</span>
-                </label>
+            <div>
+                <fieldset>
+                    Group By
+                    <div>
+                        <input class="pr-group-by" type="radio" name="pr-group-by" value="repository" id="pr-group-by-repository"><label for="pr-group-by-repository">Repository</label>
+                    </div>
+                    <div>
+                        <input class="pr-group-by" type="radio" name="pr-group-by" value="assignee" id="pr-group-by-assignee"><label for="pr-group-by-assignee">User Assigned</label>
+                    </div>
+                    <div>
+                        <input class="pr-group-by" type="radio" name="pr-group-by" value="status" id="pr-group-by-status"><label for="pr-group-by-status">Status</label>
+                    </div>
+                    <div>
+                        <input class="pr-group-by" type="radio" name="pr-group-by" value="label" id="pr-group-by-label"><label for="pr-group-by-label">Label</label>
+                    </div>
+                </fieldset>
             </div>
         </div>
     </div>

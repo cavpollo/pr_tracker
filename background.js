@@ -254,11 +254,19 @@ function asyncGet(methodName, randomId, authToken, url, page, callback, errorCal
                 return;
             }
 
+            var zeroIndexCurrentPage = page - 1;
+            var lastPage = zeroIndexCurrentPage;
+
             var link = xhr.getResponseHeader('link');
             if (link) {
-                var nextPagePresent = link.includes('rel="next"');
+                // The link header paging starts from 0, but the query paging starts from 1...
+                var linkRegex = (/(\d+)>; rel="last"/).exec(link);
 
-                if (nextPagePresent) {
+                if(linkRegex) {
+                    lastPage = parseInt(linkRegex[1]);
+                }
+
+                if (lastPage > zeroIndexCurrentPage) {
                     asyncGetWithTimeout(methodName, randomId, authToken, url, page + 1, callback, errorCallback, params);
                 }
             }
@@ -275,7 +283,7 @@ function asyncGet(methodName, randomId, authToken, url, page, callback, errorCal
                         return;
                     }
 
-                    callback(randomId, authToken, params, response);
+                    callback(randomId, authToken, params, response, zeroIndexCurrentPage, lastPage);
                 }
 
                 return;
@@ -362,7 +370,7 @@ function loadData() {
     });
 }
 
-function getUserData(randomId, authToken, params, response) {
+function getUserData(randomId, authToken, params, response, currentPage, lastPage) {
     // console.log(response);
 
     userData = {
@@ -392,12 +400,12 @@ function getUserDataError(randomId, params) {
     }
 }
 
-function getRepositories(randomId, authToken, params, response) {
+function getRepositories(randomId, authToken, params, response, currentPage, lastPage) {
     // console.log(response);
 
     for (var i = 0, repository; repository = response[i]; i++) {
         if (params.reposIgnored.indexOf(repository.name) > -1) {
-            console.debug('Repo ' + repository.name + ' was ignored.');
+            // console.debug('Repo ' + repository.name + ' was ignored.');
             continue;
         }
 
@@ -447,14 +455,14 @@ function getRepositoriesError(randomId, params) {
     }
 }
 
-function getRepositoryPullRequests(randomId, authToken, params, response) {
+function getRepositoryPullRequests(randomId, authToken, params, response, currentPage, lastPage) {
     var repoData = params.repoData;
     var repositoryFullName = params.repoData.full_name;
 
-    if (response.length > 0) {
-        // console.log(repositoryFullName + ':');
-        // console.log(pullRequestArray);
-    }
+    // if (response.length > 0) {
+    //     console.log(repositoryFullName + ':');
+    //     console.log(pullRequestArray);
+    // }
 
     for (var i = 0, pullRequest; pullRequest = response[i]; i++) {
         var pullRequestKey = '' + pullRequest.number;
@@ -544,7 +552,9 @@ function getRepositoryPullRequests(randomId, authToken, params, response) {
         }
     }
 
-    params.repoData.status = LOADED;
+    if (currentPage === lastPage) {
+        params.repoData.status = LOADED;
+    }
 
     return;
 }
@@ -559,13 +569,15 @@ function getRepositoryPullRequestsError(randomId, params) {
     }
 }
 
-function getPullRequest(randomId, authToken, params, response) {
+function getPullRequest(randomId, authToken, params, response, currentPage, lastPage) {
     var repositoryFullName = params.repositoryFullName;
     var pullRequestData = params.pullRequestData;
     var pullRequestNumber = params.pullRequestNumber;
 
-    // console.log(repositoryFullName + '/' + pullRequestNumber + ':');
-    // console.log(response);
+    // if (repositoryFullName === 'x') {
+    //     console.log(repositoryFullName + '/' + pullRequestNumber + ':');
+    //     console.log(response);
+    // }
 
     pullRequestData.comments = response.comments;
     pullRequestData.commits = response.commits;
@@ -604,15 +616,30 @@ function getPullRequestError(randomId, params) {
     }
 }
 
-function getPullRequestReviews(randomId, authToken, params, response) {
+function getPullRequestReviews(randomId, authToken, params, response, currentPage, lastPage) {
     var repositoryFullName = params.repositoryFullName;
     var pullRequestNumber = params.pullRequestNumber;
     var pullRequestData = params.pullRequestData;
 
-    // console.log(repositoryFullName + '/' + pullRequestNumber + '/reviewers:');
-    // console.log(response);
+    // if (repositoryFullName === 'x') {
+    //     console.log(repositoryFullName + '/' + pullRequestNumber + '/reviewers: page ' + currentPage);
+    //     console.log(response);
+    // }
 
     var latestUniqueReviewers = {};
+    for(var i = 0, reviewer; reviewer = pullRequestData.approved_reviewers[i]; i++){
+        latestUniqueReviewers[reviewer.userId] = reviewer;
+    }
+    for(var i = 0, reviewer; reviewer = pullRequestData.rejected_reviewers[i]; i++){
+        latestUniqueReviewers[reviewer.userId] = reviewer;
+    }
+    for(var i = 0, reviewer; reviewer = pullRequestData.comment_reviewers[i]; i++){
+        latestUniqueReviewers[reviewer.userId] = reviewer;
+    }
+    for(var i = 0, reviewer; reviewer = pullRequestData.dismissed_reviewers[i]; i++){
+        latestUniqueReviewers[reviewer.userId] = reviewer;
+    }
+
     for (var j = 0, reviewer; reviewer = response[j]; j++) {
         var userId = reviewer.user.id;
 
@@ -664,24 +691,29 @@ function getPullRequestReviews(randomId, authToken, params, response) {
     pullRequestData.rejected_reviewers = rejectedReviewers;
     pullRequestData.comment_reviewers = commentReviewers;
     pullRequestData.dismissed_reviewers = dismissedReviewers;
-    pullRequestData.reviews_status = LOADED;
+
+    if (currentPage === lastPage) {
+        pullRequestData.reviews_status = LOADED;
+    }
 
     dataTS = Date.now();
 
     updateIcon();
 
-    asyncGetWithTimeout('Labels ' + repositoryFullName,
-        randomId,
-        authToken,
-        'https://api.github.com/repos/' + repositoryFullName + '/issues/' + pullRequestNumber,
-        null,
-        getPullRequestLabels,
-        getPullRequestLabelsError,
-        {
-            repositoryFullName: repositoryFullName,
-            pullRequestNumber: pullRequestNumber,
-            pullRequestData: pullRequestData
-        });
+    if (currentPage === lastPage) {
+        asyncGetWithTimeout('Labels ' + repositoryFullName,
+            randomId,
+            authToken,
+            'https://api.github.com/repos/' + repositoryFullName + '/issues/' + pullRequestNumber,
+            null,
+            getPullRequestLabels,
+            getPullRequestLabelsError,
+            {
+                repositoryFullName: repositoryFullName,
+                pullRequestNumber: pullRequestNumber,
+                pullRequestData: pullRequestData
+            });
+    }
 }
 
 function getPullRequestReviewsError(randomId, params) {
@@ -695,7 +727,7 @@ function getPullRequestReviewsError(randomId, params) {
     }
 }
 
-function getPullRequestLabels(randomId, authToken, params, response) {
+function getPullRequestLabels(randomId, authToken, params, response, currentPage, lastPage) {
     // var repositoryFullName = params.repositoryFullName;
     // var pullRequestNumber = params.pullRequestNumber;
     var pullRequestData = params.pullRequestData;
@@ -715,8 +747,11 @@ function getPullRequestLabels(randomId, authToken, params, response) {
         labels.push(labelData);
     }
 
-    pullRequestData.labels = labels;
-    pullRequestData.labels_status = LOADED;
+    pullRequestData.labels = pullRequestData.labels.concat(labels);
+
+    if (currentPage === lastPage) {
+        pullRequestData.labels_status = LOADED;
+    }
 
     dataTS = Date.now();
 

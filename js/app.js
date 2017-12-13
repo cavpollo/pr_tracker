@@ -8,14 +8,16 @@ var lastDataRenderTS;
 var forceUIRedraw = false;
 var gettingRepositoryData = false;
 
-function getValue(name, callout, params) {
+var prSortOrder = 'pr-group-by';
+
+function getValue(name, callout, defaultValue) {
     var defaults = {};
-    defaults[name] = true;
+    defaults[name] = defaultValue === undefined ? true : defaultValue;
 
     chrome.storage.sync.get(defaults,
         function (items) {
             if (callout) {
-                callout(items[name], params);
+                callout(items[name]);
             }
         });
 }
@@ -26,6 +28,7 @@ function storeValues(values) {
             console.debug('config saved');
 
             clearTimeout(redrawTimeoutId);
+            forceUIRedraw = true;
             renderLoop();
         });
 }
@@ -96,7 +99,7 @@ $(document).ready(function () {
 
     $('input.switch-input').click(function () {
         if ($(this).prop('checked') === false && $(this).attr('data-toggled-all') === true) {
-            $('#switch-all').prop('checked', false)
+            $('#switch-all').prop('checked', false);
         }
 
         var nameValues = {};
@@ -107,8 +110,14 @@ $(document).ready(function () {
         storeValues(nameValues);
     });
 
+    $('input.pr-group-by').click(function () {
+        var nameValues = {};
+        nameValues[prSortOrder] = $(this).val();
+
+        storeValues(nameValues);
+    });
+
     $('#repositories').on('click', '.toggle-pull-requests', function () {
-        console.log('ASDF')
         var toggle_id = $(this).attr('data-toggle-id');
         var repositoryContentElement = $('#' + toggle_id);
         if (repositoryContentElement.hasClass('hide-repository-content')) {
@@ -132,6 +141,24 @@ $(document).ready(function () {
                 switchInput.prop('checked', value);
             });
     });
+
+    getValue(prSortOrder,
+        function (value) {
+            var prSortRadioButton;
+
+            if (value === '') {
+                prSortRadioButton = $('input.pr-group-by').first();
+            } else {
+                prSortRadioButton = $('#pr-group-by-' + value);
+
+                if(prSortRadioButton.length === 0) {
+                    prSortRadioButton = $('input.pr-group-by').first();
+                }
+            }
+
+            prSortRadioButton.prop('checked', true);
+        },
+        '');
 
     renderLoop();
 });

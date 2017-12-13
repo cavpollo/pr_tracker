@@ -52,7 +52,7 @@ i.button-refreshing {
 }
 
 .repository-title {
-    font-size: 24px;
+    font-size: 18px;
     color: #000000;
 }
 
@@ -76,12 +76,14 @@ i.button-refreshing {
 .pull-request-title {
     background-color: #2ba6cb;
     border-radius: 4px 4px 0px 0px;
-    padding: 0px 2px 0px 2px;
+    padding: 0px 4px 0px 4px;
+    text-shadow: black 1px 1px;
 }
 
 .pull-request-title-link {
     font-size: 18px;
     color: #ffffff;
+    font-weight: bold;
 }
 
 .pull-request-row {
@@ -119,6 +121,12 @@ i.button-refreshing {
     display: inline-block;
 }
 
+.text-description-block {
+    position: relative;
+    top: 50%;
+    transform: translate(0%, -50%);
+}
+
 .text-no-overflow {
     white-space: nowrap;
     overflow: hidden;
@@ -127,6 +135,18 @@ i.button-refreshing {
 
 .pull-request-branch-title {
     font-weight: bold;
+}
+
+.assignees-block {
+    position: relative;
+    top: 50%;
+    transform: translate(0%, -50%);
+}
+
+.reviewers-block {
+    position: relative;
+    top: 50%;
+    transform: translate(0%, -50%);
 }
 
 div.user-badge {
@@ -177,6 +197,12 @@ img.user-badge {
 
 img.pending-review {
     filter: grayscale(100%) brightness(66%);
+}
+
+.label-block {
+    position: relative;
+    top: 50%;
+    transform: translate(0%, -50%);
 }
 
 .pr-label {
