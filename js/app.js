@@ -70,6 +70,8 @@ function renderRepositories(repositoryDivElement, dataTS, doneLoading, anyError)
                 repositoriesElement.appendChild(repositoryDivElement.removeChild(repositoryDivElement.firstChild))
             }
 
+            // console.debug('UI Refresh: ' + dataTS + ' - ' + doneLoading + ' - ' + anyError);
+
             $('#repositories i').addClass('button-refreshing');
         }, animationTimeInMilliseconds / 4);
 

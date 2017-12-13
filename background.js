@@ -1,4 +1,5 @@
 var requestTimeoutSeconds = 1000 * 2;
+var removeOldRepositoriesSeconds = 45;
 var refreshPeriodMinutes = 3;
 var watchdogPeriodMinutes = 7;
 var maxRequestsPerSecond = 20;
@@ -333,8 +334,6 @@ function loadData() {
 
             console.debug('LOAD DATA: ' + randomId);
 
-            removeOldRepositories();
-
             if (Object.keys(userData).length === 0) {
                 asyncGetWithTimeout('User',
                     randomId,
@@ -547,6 +546,8 @@ function getRepositoryPullRequests(randomId, authToken, params, response, curren
             // TODO: Count how many comments are left unanswered by the assignee
         } else {
             // console.debug(repositoryFullName + ': ' + pullRequest.number + ' UNCHANGED');
+
+            dataTS = Date.now();
 
             existingPullRequest.pr_status = UNCHANGED;
         }
@@ -807,6 +808,10 @@ function setRepositoryDataAsOld() {
             repository.pull_requests[pullRequestKey].pr_status = OLD;
         }
     }
+
+    setTimeout(function () {
+        removeOldRepositories();
+    }, removeOldRepositoriesSeconds * 1000);
 }
 
 

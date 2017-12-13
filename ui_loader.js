@@ -60,6 +60,9 @@ function sortRepositoryData(groupBy, repositoriesData) {
                         case 'LOADING':
                             textStatus = 'DATA IS LOADING';
                             break;
+                        case 'OLD':
+                            textStatus = 'DATA IS STALE';
+                            break;
                         default:
                             textStatus = 'INTERNAL ERROR';
                             break;
@@ -239,9 +242,6 @@ function getRepositoryData(callback) {
             var renderedPRs = false;
             for (var j = 0, pullRequest; pullRequest = pullRequests[j]; j++) {
                 // console.log(pullRequest.pr_status + ': ' + group.name + ' -- ' + pullRequest.title);
-                // if (pullRequest.pr_status === 'OLD') {
-                //     continue;
-                // }
 
                 var prDoneLoading = true;
                 var prErrorLoading = false;
@@ -317,7 +317,7 @@ function getRepositoryData(callback) {
             for (var pullRequestKey in pullRequests) {
                 var pullRequest = pullRequests[pullRequestKey];
 
-                if (pullRequest.pr_status === 'LOADING' || pullRequest.pr_status === 'ERROR' ||
+                if (pullRequest.pr_status === 'LOADING' || pullRequest.pr_status === 'ERROR' || pullRequest.pr_status === 'OLD' ||
                     pullRequest.reviews_status === 'LOADING' || pullRequest.reviews_status === 'ERROR' ||
                     pullRequest.labels_status === 'LOADING' || pullRequest.labels_status === 'ERROR') {
                     reposDoneLoading = false;
@@ -482,7 +482,11 @@ function getPullRequestDisplayStatus(pullRequest) {
             pullRequest.labels_status === 'ERROR') {
             statusText = 'ERROR';
         } else {
-            statusText = 'LOADING';
+            if (pullRequest.pr_status === 'OLD'){
+                statusText = 'OLD';
+            } else {
+                statusText = 'LOADING';
+            }
         }
     }
 
@@ -530,8 +534,13 @@ function getPullRequestCol1Element(pullRequest) {
             iconClass = 'fi-skull';
             textStatus = 'ERROR LOADING DATA';
             break;
-        case 'LOADING':
+        case 'OLD':
             bgColor = '#a8a8a8';
+            iconClass = 'fi-clock';
+            textStatus = 'DATA IS STALE';
+            break;
+        case 'LOADING':
+            bgColor = '#00a8a3';
             iconClass = 'fi-refresh';
             textStatus = 'DATA IS LOADING';
             break;
@@ -544,8 +553,8 @@ function getPullRequestCol1Element(pullRequest) {
 
     pullRequestStatusElement.style.backgroundColor = bgColor;
     pullRequestIconStatusElement.className += ' ' + iconClass;
-    pullRequestStatusElement.title = displayStatus;
-    pullRequestStatusElement.alt = displayStatus;
+    pullRequestStatusElement.title = textStatus;
+    pullRequestStatusElement.alt = textStatus;
 
     pullRequestStatusElement.appendChild(pullRequestIconStatusElement);
 
