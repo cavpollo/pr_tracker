@@ -1,4 +1,4 @@
-function sortRepositoryData(groupBy, repositoriesData) {
+function groupRepositoryData(groupBy, repositoriesData) {
     var groupedPRs = {};
     var counter = 0;
 
@@ -11,19 +11,35 @@ function sortRepositoryData(groupBy, repositoriesData) {
                 var sortedPullRequest = sortPullRequests(pullRequests);
 
                 for (var i = 0, pullRequest; pullRequest = sortedPullRequest[i]; i++) {
-                    for (var j = 0, assignee; assignee = pullRequest.assignees[j]; j++) {
-                        if (groupedPRs[assignee.id] === undefined) {
+                    if (pullRequest.assignees.length === 0) {
+                        if (groupedPRs['NOTASSIGNED'] === undefined) {
                             var group = {
                                 id: counter,
-                                name: assignee.username,
-                                url: assignee.url,
+                                name: 'NOBODY ASSIGNED',
+                                url: null,
                                 pull_requests: [pullRequest]
                             };
 
-                            groupedPRs[assignee.id] = group;
+                            groupedPRs['NOTASSIGNED'] = group;
                             counter++;
                         } else {
-                            groupedPRs[assignee.id].pull_requests.push(pullRequest);
+                            groupedPRs['NOTASSIGNED'].pull_requests.push(pullRequest);
+                        }
+                    } else {
+                        for (var j = 0, assignee; assignee = pullRequest.assignees[j]; j++) {
+                            if (groupedPRs[assignee.id] === undefined) {
+                                var group = {
+                                    id: counter,
+                                    name: assignee.username,
+                                    url: assignee.url,
+                                    pull_requests: [pullRequest]
+                                };
+
+                                groupedPRs[assignee.id] = group;
+                                counter++;
+                            } else {
+                                groupedPRs[assignee.id].pull_requests.push(pullRequest);
+                            }
                         }
                     }
                 }
@@ -93,19 +109,35 @@ function sortRepositoryData(groupBy, repositoriesData) {
                 var sortedPullRequest = sortPullRequests(pullRequests);
 
                 for (var i = 0, pullRequest; pullRequest = sortedPullRequest[i]; i++) {
-                    for (var j = 0, label; label = pullRequest.labels[j]; j++) {
-                        if (groupedPRs[label.name] === undefined) {
+                    if(pullRequest.labels.length === 0){
+                        if (groupedPRs['NOLABEL'] === undefined) {
                             var group = {
                                 id: counter,
-                                name: label.name,
+                                name: 'NO LABEL ASSIGNED',
                                 url: null,
                                 pull_requests: [pullRequest]
                             };
 
-                            groupedPRs[label.name] = group;
+                            groupedPRs['NOLABEL'] = group;
                             counter++;
                         } else {
-                            groupedPRs[label.name].pull_requests.push(pullRequest);
+                            groupedPRs['NOLABEL'].pull_requests.push(pullRequest);
+                        }
+                    }else {
+                        for (var j = 0, label; label = pullRequest.labels[j]; j++) {
+                            if (groupedPRs[label.name] === undefined) {
+                                var group = {
+                                    id: counter,
+                                    name: label.name,
+                                    url: null,
+                                    pull_requests: [pullRequest]
+                                };
+
+                                groupedPRs[label.name] = group;
+                                counter++;
+                            } else {
+                                groupedPRs[label.name].pull_requests.push(pullRequest);
+                            }
                         }
                     }
                 }
@@ -150,7 +182,7 @@ function sortRepositoryData(groupBy, repositoriesData) {
     return sortedGroups;
 }
 
-function sortPullRequests(pullRequests){
+function sortPullRequests(pullRequests) {
     var pullRequestsWithDate = [];
     for (var pullRequestKey in pullRequests) {
         var pullRequest = pullRequests[pullRequestKey];
@@ -209,7 +241,7 @@ function getRepositoryData(callback) {
         // console.log(repositoriesData);
         // console.log(items);
 
-        var groupedData = sortRepositoryData(items['pr-group-by'], repositoriesData);
+        var groupedData = groupRepositoryData(items['pr-group-by'], repositoriesData);
 
         var username = userData['username'];
 
@@ -482,7 +514,7 @@ function getPullRequestDisplayStatus(pullRequest) {
             pullRequest.labels_status === 'ERROR') {
             statusText = 'ERROR';
         } else {
-            if (pullRequest.pr_status === 'OLD'){
+            if (pullRequest.pr_status === 'OLD') {
                 statusText = 'OLD';
             } else {
                 statusText = 'LOADING';

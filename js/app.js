@@ -100,7 +100,7 @@ $(document).ready(function () {
     });
 
     $('input.switch-input').click(function () {
-        if ($(this).prop('checked') === false && $(this).attr('data-toggled-all') === true) {
+        if ($(this).prop('checked') === false && $('#switch-all').prop('checked') === true) {
             $('#switch-all').prop('checked', false);
         }
 
