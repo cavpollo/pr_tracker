@@ -469,6 +469,9 @@ function getRepositoryPullRequests(randomId, authToken, params, response, curren
 
         if (existingPullRequest === undefined ||
             existingPullRequest === null ||
+            existingPullRequest.pr_status === LOADING ||
+            existingPullRequest.reviews_status === LOADING ||
+            existingPullRequest.labels_status === LOADING ||
             existingPullRequest.updated_at !== pullRequest.updated_at) {
 
             var assigneesArray = [];
@@ -516,6 +519,7 @@ function getRepositoryPullRequests(randomId, authToken, params, response, curren
                 deletions: -1,
                 changed_files: -1,
                 mergeable: null,
+                mergeable_state: 'UNKNOWN',
                 created_by: pullRequest.user.login,
                 created_at: pullRequest.created_at,
                 updated_at: pullRequest.updated_at,
@@ -585,7 +589,8 @@ function getPullRequest(randomId, authToken, params, response, currentPage, last
     pullRequestData.additions = response.additions;
     pullRequestData.deletions = response.deletions;
     pullRequestData.changed_files = response.changed_files;
-    pullRequestData.mergeable = response.mergeable;
+    pullRequestData.mergeable = response.mergeable; // true or false
+    pullRequestData.mergeable_state = response.mergeable_state; // clean, dirty, or unstable
     pullRequestData.pr_status = LOADED;
 
     dataTS = Date.now();

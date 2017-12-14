@@ -238,7 +238,7 @@ function getRepositoryData(callback) {
         var dataTS = backgroundPage.dataTS;
 
         // console.log(userData);
-        // console.log(repositoriesData);
+        console.log(repositoriesData);
         // console.log(items);
 
         var groupedData = groupRepositoryData(items['pr-group-by'], repositoriesData);
@@ -549,7 +549,7 @@ function getPullRequestCol1Element(pullRequest) {
         case 'CONFLICTS':
             bgColor = '#ddde00';
             iconClass = 'fi-wrench';
-            textStatus = 'CONFLICTS MUST BE FIXED';
+            textStatus = 'CONFLICTS MUST BE FIXED: ' + pullRequest.mergeable_state;
             break;
         case 'APPROVAL_REQUIRED':
             bgColor = '#ff8415';
