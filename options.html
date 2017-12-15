@@ -30,10 +30,20 @@
     </label>
 </div>
 <div class="row">
-    <label>
-        Repositories Ignored (full names comma separated):
-        <textarea id="reposIgnored" rows="5"></textarea>
-    </label>
+    <div>
+        <label>
+            Repositories Ignored:
+            <div id="repositories" class="repository-options">
+                Loading, Please Wait...
+            </div>
+        </label>
+    </div>
+</div>
+<div class="row">
+    <div class="button-group">
+        <button id="uncheckAllRepositories" class="button">Uncheck All</button>
+        <button id="checkAllRepositories" class="button">Check All</button>
+    </div>
 </div>
 
 <div class="row">

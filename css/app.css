@@ -221,3 +221,11 @@ img.pending-review {
 .toggle-pull-requests {
     user-select: none;
 }
+
+.repository-options {
+    background-color: #f8f8f8;
+    height: 250px;
+    overflow: auto;
+    padding: 4px;
+    margin-bottom: 16px;
+}
