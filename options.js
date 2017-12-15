@@ -14,8 +14,6 @@ function save_options() {
         }
     }
 
-    console.log(reposIgnored)
-
     chrome.storage.sync.set({
         authToken: authToken,
         organization: organization,
