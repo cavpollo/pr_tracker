@@ -263,7 +263,7 @@ function asyncGet(methodName, randomId, authToken, url, page, callback, errorCal
                 // The link header paging starts from 0, but the query paging starts from 1...
                 var linkRegex = (/(\d+)>; rel="last"/).exec(link);
 
-                if(linkRegex) {
+                if (linkRegex) {
                     lastPage = parseInt(linkRegex[1]);
                 }
 
@@ -633,16 +633,16 @@ function getPullRequestReviews(randomId, authToken, params, response, currentPag
     // }
 
     var latestUniqueReviewers = {};
-    for(var i = 0, reviewer; reviewer = pullRequestData.approved_reviewers[i]; i++){
+    for (var i = 0, reviewer; reviewer = pullRequestData.approved_reviewers[i]; i++) {
         latestUniqueReviewers[reviewer.userId] = reviewer;
     }
-    for(var i = 0, reviewer; reviewer = pullRequestData.rejected_reviewers[i]; i++){
+    for (var i = 0, reviewer; reviewer = pullRequestData.rejected_reviewers[i]; i++) {
         latestUniqueReviewers[reviewer.userId] = reviewer;
     }
-    for(var i = 0, reviewer; reviewer = pullRequestData.comment_reviewers[i]; i++){
+    for (var i = 0, reviewer; reviewer = pullRequestData.comment_reviewers[i]; i++) {
         latestUniqueReviewers[reviewer.userId] = reviewer;
     }
-    for(var i = 0, reviewer; reviewer = pullRequestData.dismissed_reviewers[i]; i++){
+    for (var i = 0, reviewer; reviewer = pullRequestData.dismissed_reviewers[i]; i++) {
         latestUniqueReviewers[reviewer.userId] = reviewer;
     }
 

@@ -153,7 +153,7 @@ $(document).ready(function () {
             } else {
                 prSortRadioButton = $('#pr-group-by-' + value);
 
-                if(prSortRadioButton.length === 0) {
+                if (prSortRadioButton.length === 0) {
                     prSortRadioButton = $('input.pr-group-by').first();
                 }
             }

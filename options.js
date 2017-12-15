@@ -29,14 +29,14 @@ function save_options() {
     });
 }
 
-function check_all(){
+function check_all() {
     var reposIgnoredElements = document.getElementsByClassName(repoIgnoredCheckbox);
     for (var i = 0; i < reposIgnoredElements.length; i++) {
         reposIgnoredElements[i].checked = true;
     }
 }
 
-function uncheck_all(){
+function uncheck_all() {
     var reposIgnoredElements = document.getElementsByClassName(repoIgnoredCheckbox);
     for (var i = 0; i < reposIgnoredElements.length; i++) {
         reposIgnoredElements[i].checked = false;

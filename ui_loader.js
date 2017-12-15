@@ -109,7 +109,7 @@ function groupRepositoryData(groupBy, repositoriesData) {
                 var sortedPullRequest = sortPullRequests(pullRequests);
 
                 for (var i = 0, pullRequest; pullRequest = sortedPullRequest[i]; i++) {
-                    if(pullRequest.labels.length === 0){
+                    if (pullRequest.labels.length === 0) {
                         if (groupedPRs['NOLABEL'] === undefined) {
                             var group = {
                                 id: counter,
@@ -123,7 +123,7 @@ function groupRepositoryData(groupBy, repositoriesData) {
                         } else {
                             groupedPRs['NOLABEL'].pull_requests.push(pullRequest);
                         }
-                    }else {
+                    } else {
                         for (var j = 0, label; label = pullRequest.labels[j]; j++) {
                             if (groupedPRs[label.name] === undefined) {
                                 var group = {
